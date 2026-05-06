@@ -7,7 +7,7 @@ import Footer from './Footer';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const CreateOrder = () => {
-  const { t, i18n ,language  } = useLanguage(); // نستخدم الترجمة من إعداداتك الجاهزة
+  const { t ,language  } = useLanguage(); // نستخدم الترجمة من إعداداتك الجاهزة
   const [customerInfo, setCustomerInfo] = useState({ name: '', phone: '', address: '' });
   const [description, setDescription] = useState('');
   const [image, setImage] = useState(null);
@@ -15,6 +15,12 @@ const CreateOrder = () => {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  useEffect(() => {
+    const savedUser = JSON.parse(localStorage.getItem('user'));
+    if (savedUser) {
+      setCustomerInfo(prev => ({ ...prev, name: savedUser.name ,phone:savedUser.phone.slice(4),address:savedUser.address }));
+    }
+  })
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];

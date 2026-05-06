@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { FiCheckCircle, FiCreditCard, FiDollarSign, FiPrinter } from 'react-icons/fi';
 
-const PaymentStep = ({ totalAmount, paymentMethod, setPaymentMethod, onFinalize, loading, onBack }) => {
+const PaymentStep = ({ totalAmount, paymentMethod,orderType, setPaymentMethod, onFinalize, loading, onBack }) => {
   return (
     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-md mx-auto">
       <div className="bg-white rounded-[3rem] p-10 shadow-2xl border border-gray-50 text-center relative overflow-hidden">
@@ -20,8 +20,13 @@ const PaymentStep = ({ totalAmount, paymentMethod, setPaymentMethod, onFinalize,
             { id: 'cash', label: 'دفع نقدي (Cash)', icon: <FiDollarSign /> },
             { id: 'points', label: 'دفع نقاط (Points)', icon: <FiCreditCard /> },
             { id: 'card', label: 'بطاقة ائتمان (Card)', icon: <FiCreditCard /> }
-          ].map((method) => (
-            <button 
+          ].filter((method) => {
+      if (method.id === 'points') {
+        return orderType === 'buy';
+      }
+      return true;
+    }).map((method) => (
+           <button 
               key={method.id}
               onClick={() => setPaymentMethod(method.id)}
               className={`flex items-center justify-between p-6 rounded-3xl border-2 transition-all duration-300 ${

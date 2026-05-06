@@ -212,7 +212,7 @@ const AuthModal = ({ isOpen, onClose }) => {
                   <input
                     type="text" name="otp" value={formData.otp} onChange={handleInputChange}
                     placeholder="****" maxLength="4"
-                    className="w-full text-center text-2xl tracking-[1rem] py-3 border rounded-lg focus:ring-2 outline-none border-silver-200"
+                    className="w-full text-center text-2xl tracking-[1rem] py-3 border rounded-lg focus:ring-2 outline-none border-silver-200 text-[#000]"
                   />
                   <div className="text-center">
                     <button type="button" onClick={() => {/* Resend logic */}} className="text-silver-600 text-sm hover:underline">

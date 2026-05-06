@@ -31,8 +31,8 @@ const SilverCheckout = () => {
   useEffect(() => {
     const savedUser = JSON.parse(localStorage.getItem('user'));
     if (savedUser) {
-      setUser({ id: savedUser.id, fullName: savedUser.name });
-      setFormData(prev => ({ ...prev, fullName: savedUser.name }));
+      setUser({ id: savedUser.id, fullName: savedUser.name});
+      setFormData(prev => ({ ...prev, fullName: savedUser.name ,phone:savedUser.phone.slice(4),address:savedUser.address }));
     }
 
     const fetchCities = async () => {
@@ -130,7 +130,7 @@ const SilverCheckout = () => {
                 <div className="group">
                   <label className="block text-sm font-bold text-slate-700 mb-2 px-1">{t('fullName')}</label>
                   <div className="relative flex items-center">
-                    <FiUser className="absolute mx-4 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
+                    {/* <FiUser className="absolute mx-4 text-slate-400 group-focus-within:text-slate-900 transition-colors" /> */}
                     <input 
                       required
                       className="w-full py-4 pr-4 pl-12 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all" 
@@ -173,7 +173,7 @@ const SilverCheckout = () => {
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-2 px-1">{t('city')}</label>
                     <div className="relative flex items-center">
-                      <FiMapPin className="absolute mx-4 text-slate-400" />
+                      {/* <FiMapPin className="absolute mx-4 text-slate-400" /> */}
                       <select 
                         required
                         className="w-full py-4 pr-10 pl-12 bg-slate-50 border border-slate-200 rounded-2xl appearance-none focus:bg-white focus:border-slate-900 outline-none transition-all cursor-pointer"
@@ -190,6 +190,7 @@ const SilverCheckout = () => {
                       required
                       className="w-full py-4 px-6 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-slate-900 outline-none transition-all" 
                       placeholder={t('detailedAddress')}
+                      value={formData.address}
                       onChange={(e) => setFormData({...formData, address: e.target.value})}
                     />
                   </div>

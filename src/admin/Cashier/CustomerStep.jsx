@@ -91,7 +91,7 @@ const CustomerStep = ({
             </div>
             <div className="text-left font-black text-yellow-400 uppercase text-xs">
               <span className="block text-white/40 text-[10px] mb-1 font-normal">الرصيد الحالي</span>
-              {Number(customer.points)*0.05} دينار أردني
+              {(Number(customer.points)*0.05).toFixed(2)} دينار أردني
             </div>
             <div className="text-left font-black text-yellow-400 uppercase text-xs">
               <span className="block text-white/40 text-[10px] mb-1 font-normal">عدد النقاط</span>

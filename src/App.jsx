@@ -32,6 +32,8 @@ import CashieSystem from "./admin/CashieSystem";
 import CashierHistory from "./admin/Cashier/CashierHistory";
 import OrderDetails from "./admin/Cashier/OrderDetails";
 import ProtectedClientRoute from "./ProtectedClientRoute";
+import ProductForm from "./admin/ProductForm";
+import AdminForm from "./admin/AdminForm";
 
 // مكون الصفحة الرئيسية لتنظيم الكود
 const HomePage = () => (
@@ -94,7 +96,10 @@ function AppContent() {
             <Route path="cashier-system" element={<CashieSystem />} />
             <Route path="cashier-system/history" element={<CashierHistory />} />
             <Route path="cashier-system/orders/:orderId" element={<OrderDetails />} />
-
+            <Route path="products/add" element={<ProductForm />} />
+            <Route path="products/edit/:id" element={<ProductForm />} />
+            <Route path="employees/add" element={<AdminForm />} />
+            <Route path="employees/edit/:id" element={<AdminForm />} />
             <Route
               index
               element={

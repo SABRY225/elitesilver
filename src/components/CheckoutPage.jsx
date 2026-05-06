@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiChevronLeft, FiCreditCard, FiTruck, FiLock, FiCheckCircle } from 'react-icons/fi';
+import { FiChevronLeft, FiCreditCard, FiTruck, FiLock, FiCheckCircle, FiGift } from 'react-icons/fi';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -39,11 +39,12 @@ function CheckoutPage() {
       try {
         const user = JSON.parse(userData);
         setUser(user);
-        console.log(user);
         
         setFormData(prev => ({
           ...prev,
           fullName: user.name,
+          address: user.address,
+          phone: user.phone.slice(4)
         }));
       } catch (error) {
         console.error('Error parsing user data:', error);
@@ -56,7 +57,6 @@ function CheckoutPage() {
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/city/shipping-cities`);
       const citiesData = res.data;
       setCities(citiesData);
-      console.log(citiesData);
       
       // بناء كائن الشحن
       const fees = {};
@@ -98,8 +98,8 @@ function CheckoutPage() {
         fullName: formData.fullName,
         city: formData.city,
         address: formData.address,
-        phone: formData.phone,
-        alternatePhone: formData.alternatePhone,
+        phone: '+962'+formData.phone,
+        alternatePhone: formData.alternatePhone?'+962'+formData.alternatePhone:formData.alternatePhone,
         paymentMethod,
         cartItems,
         subtotal,
@@ -108,8 +108,7 @@ function CheckoutPage() {
         ...(user && { userId: user.id }),
       };
 
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/orders/new`, orderData);
-      console.log('Order response:', response.data);
+      await axios.post(`${import.meta.env.VITE_API_URL}/orders/new`, orderData);
 
       toast.dismiss(loadingToast);
       toast.success(t('orderSuccess') || 'Order placed successfully!', {
@@ -121,8 +120,7 @@ function CheckoutPage() {
       navigate('/order-success');
     } catch (error) {
       toast.dismiss(loadingToast);
-      toast.error(t('orderError') || 'Failed to place order. Please try again.');
-      console.error('Order submission error:', error);
+      toast.error(t(error?.response?.data?.error) || 'Failed to place order. Please try again.');
     }
   };
 
@@ -162,52 +160,84 @@ function CheckoutPage() {
                 </div>
                 <div className="md:col-span-2 space-y-2">
                   <label className="text-[10px] uppercase tracking-widest text-[#8E8E8E]">{t('address')}</label>
-                  <textarea required name="address" onChange={handleInputChange} rows="3" className="w-full bg-[#1A1A1A] border border-white/10 p-4 text-sm focus:border-white outline-none transition-all" placeholder={t('Street, Building, Apartment...')}></textarea>
+                  <textarea required name="address" value={formData.address} onChange={handleInputChange} rows="3" className="w-full bg-[#1A1A1A] border border-white/10 p-4 text-sm focus:border-white outline-none transition-all" placeholder={t('Street, Building, Apartment...')}></textarea>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase tracking-widest text-[#8E8E8E]">{t('phone')}</label>
-                  <input required name="phone" onChange={handleInputChange} type="tel" className="w-full bg-[#1A1A1A] border border-white/10 p-4 text-sm focus:border-white outline-none transition-all" placeholder="+974 0000 0000" />
+                  <input required name="phone" value={formData.phone} onChange={handleInputChange} type="tel" className="w-full bg-[#1A1A1A] border border-white/10 p-4 text-sm focus:border-white outline-none transition-all" placeholder="700 000 000" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase tracking-widest text-[#8E8E8E]">{t('alternatePhone') || 'Alternate Phone'}</label>
-                  <input name="alternatePhone" onChange={handleInputChange} type="tel" className="w-full bg-[#1A1A1A] border border-white/10 p-4 text-sm focus:border-white outline-none transition-all" placeholder="+974 0000 0000" />
+                  <input name="alternatePhone" onChange={handleInputChange} type="tel" className="w-full bg-[#1A1A1A] border border-white/10 p-4 text-sm focus:border-white outline-none transition-all" placeholder="700 000 000" />
                 </div>
               </div>
             </section>
 
-            <section>
-              <h2 className="text-xl sm:text-2xl font-bold uppercase tracking-tighter mb-8 border-b border-white/5 pb-4">{t('paymentMethod')}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Credit Card Option */}
-                <div 
-                  onClick={() => {
-                    toast(t('comingSoon'), { icon: '⏳' });
-                  }}
-                  className="p-6 border border-white/10 bg-white/5 opacity-60 cursor-not-allowed transition-all flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-4">
-                    <FiCreditCard size={20} className="text-[#888]" />
-                    <div>
-                      <span className="text-[11px] font-bold uppercase tracking-widest text-[#888]">{t('creditCard')}</span>
-                      <p className="text-[9px] text-[#aaa]">{t('comingSoon')}</p>
-                    </div>
-                  </div>
-                  <span className="text-[11px] font-semibold text-[#aaa]">⏳</span>
-                </div>
+            <section className="mt-12">
+  <h2 className="text-xl sm:text-2xl font-bold uppercase tracking-tighter mb-8 border-b border-white/5 pb-4">
+    {t('paymentMethod')}
+  </h2>
+  
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    {/* بطاقة الدفع بالبطاقة - Coming Soon */}
+    <div 
+      onClick={() => toast(t('comingSoon'), { icon: '⏳' })}
+      className="group relative p-6 rounded-2xl border border-white/5 bg-white/[0.02] opacity-50 cursor-not-allowed transition-all"
+    >
+      <div className="flex flex-col gap-4">
+        <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
+          <FiCreditCard size={20} className="text-gray-500" />
+        </div>
+        <div>
+          <span className="text-[11px] font-black uppercase tracking-widest text-gray-500 block">{t('creditCard')}</span>
+          <p className="text-[9px] text-gray-600 font-bold mt-1 uppercase">{t('comingSoon')}</p>
+        </div>
+      </div>
+    </div>
 
-                {/* Cash on Delivery Option */}
-                <div 
-                  onClick={() => setPaymentMethod('cod')}
-                  className={`p-6 border cursor-pointer transition-all flex items-center justify-between ${paymentMethod === 'cod' ? 'border-white bg-white/5' : 'border-white/10 hover:border-white/30'}`}
-                >
-                  <div className="flex items-center gap-4">
-                    <FiTruck size={20} className={paymentMethod === 'cod' ? 'text-white' : 'text-[#444]'} />
-                    <span className="text-[11px] font-bold uppercase tracking-widest">{t('cashOnDelivery')}</span>
-                  </div>
-                  {paymentMethod === 'cod' && <FiCheckCircle className="text-white" />}
-                </div>
-              </div>
-            </section>
+    {/* بطاقة الدفع عند الاستلام */}
+    <div 
+      onClick={() => setPaymentMethod('cod')}
+      className={`relative p-6 rounded-2xl border-2 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] flex flex-col gap-4
+        ${paymentMethod === 'cod' 
+          ? 'border-white bg-white/5 shadow-[0_0_20px_rgba(255,255,255,0.05)]' 
+          : 'border-white/10 bg-transparent hover:border-white/20'}`}
+    >
+      <div className="flex justify-between items-start">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${paymentMethod === 'cod' ? 'bg-white text-black' : 'bg-white/5 text-white'}`}>
+          <FiTruck size={20} />
+        </div>
+        {paymentMethod === 'cod' && <FiCheckCircle className="text-white text-lg animate-pulse" />}
+      </div>
+      <div>
+        <span className={`text-[11px] font-black uppercase tracking-widest ${paymentMethod === 'cod' ? 'text-white' : 'text-gray-400'}`}>
+          {t('cashOnDelivery')}
+        </span>
+      </div>
+    </div>
+
+    {/* بطاقة دفع النقاط */}
+    <div 
+      onClick={() => setPaymentMethod('points')}
+      className={`relative p-6 rounded-2xl border-2 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] flex flex-col gap-4
+        ${paymentMethod === 'points' 
+          ? 'border-white bg-white/5 shadow-[0_0_20px_rgba(255,255,255,0.05)]' 
+          : 'border-white/10 bg-transparent hover:border-white/20'}`}
+    >
+      <div className="flex justify-between items-start">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${paymentMethod === 'points' ? 'bg-white text-black' : 'bg-white/5 text-white'}`}>
+          <FiGift size={20} /> {/* أيقونة الهدية أو النجمة أنسب للنقاط */}
+        </div>
+        {paymentMethod === 'points' && <FiCheckCircle className="text-white text-lg animate-pulse" />}
+      </div>
+      <div>
+        <span className={`text-[11px] font-black uppercase tracking-widest ${paymentMethod === 'points' ? 'text-white' : 'text-gray-400'}`}>
+          {t('paypoints')}
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
           </div>
 
           {/* RIGHT: Order Summary */}

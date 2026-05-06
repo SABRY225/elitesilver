@@ -57,7 +57,7 @@ const ProfilePage = () => {
   // 2. جلب طلبات السبائك من الإندبوينت الجديدة
   const loadBullionOrders = async (userId, token) => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/orders-silver/${userId}`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/orders/silver/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setBullionOrders(Array.isArray(response.data) ? response.data : []);

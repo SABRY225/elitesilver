@@ -12,7 +12,10 @@ const StatsGrid = ({ stats }) => {
     { label: 'طلبات الصيانة اليوم', value: stats.repairCount, icon: <FiTool />, color: 'bg-amber-500' },
     { label: 'عملاء جدد اليوم', value: stats.newCustomers, icon: <FiUsers />, color: 'bg-purple-500' },
   ];
-
+   const handelNav =()=>{
+    localStorage.setItem("adminActiveTab","clients") 
+    navigate('/admin')
+   }
   return (
     <>
       <div className='flex justify-between items-center mb-8'>
@@ -21,7 +24,7 @@ const StatsGrid = ({ stats }) => {
           <p className="text-gray-400 mb-12 uppercase tracking-tighter text-sm">إدارة مبيعات وخدمات المتجر</p>
         </div>
          <button 
-              onClick={() => navigate('/admin')} // -1 تعني العودة خطوة واحدة للخلف في سجل المتصفح
+              onClick={() => { handelNav()}} // -1 تعني العودة خطوة واحدة للخلف في سجل المتصفح
               className="flex items-center gap-2 text-gray-500 hover:text-black transition-all font-bold text-sm mb-6"
             >
               <FiArrowRight /> 

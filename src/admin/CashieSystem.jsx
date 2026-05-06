@@ -92,6 +92,7 @@ const CashieSystem = () => {
         });
         finalCustomerId = customerRes.data.id;
       }
+    console.log(cart);
 
       // ب- إرسال بيانات الفاتورة
       const orderPayload = {
@@ -100,12 +101,14 @@ const CashieSystem = () => {
         paymentMethod: paymentMethod,
         totalAmount: totalAmount,
         items: cart.map(item => ({
+          id: item.productId,
           productName: item.name,
           quantity: item.quantity,
           unitPrice: item.price
         }))
       };
-
+    console.log(orderPayload);
+    
       await axios.post(`${API_URL}/orders/cashier-system`, orderPayload, {
         headers: {
           "Authorization": "Bearer " + localStorage.getItem("token")
@@ -140,6 +143,7 @@ const CashieSystem = () => {
     />,
     <PaymentStep
       key="3"
+      orderType={orderType}
       totalAmount={totalAmount}
       paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod}
       loading={loading} onFinalize={handleFinalize}

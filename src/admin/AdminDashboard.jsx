@@ -27,7 +27,8 @@ import OrdersSilverTable from './OrdersSilverTable';
 import CustomOrdersPage from './CustomOrdersPage';
 
 function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const activeTabFromStorage = localStorage.getItem("adminActiveTab");
+  const [activeTab, setActiveTab] = useState(activeTabFromStorage);
   const [stats, setStats] = useState({
     totalSales: 0, ordersCount: 0, productsCount: 0, pendingCustomOrders: 0
   });
@@ -62,7 +63,15 @@ function AdminDashboard() {
     const interval = setInterval(() => fetchStats(true), 300000);
     return () => clearInterval(interval);
   }, [fetchStats, token]);
-
+useEffect(() => {
+  if (activeTab) {
+    localStorage.setItem("adminActiveTab", activeTab);
+    
+    if (activeTab === 'CashierSystem') {
+      navigate("./cashier-system");
+    }
+  }
+}, [activeTab, navigate]);
   const handleLogout = () => {
     toast((t) => (
       <div className="flex flex-col gap-3 font-['Tajawal'] text-right">
@@ -193,19 +202,19 @@ const allowedMenuItems = useMemo(() => {
               </div>
             ) : (
               <div className="animate-in fade-in zoom-in duration-500">
-             {activeTab === 'overview' && hasPermission("الاحصائيات العامة") && <StatsOverview stats={stats} />}
-                {activeTab === 'orders' && hasPermission("ادارة الطلبات") && <OrdersTable searchQuery={searchQuery} />}
+             {activeTab === 'overview' && hasPermission("الاحصائيات العامة") && <StatsOverview stats={stats} /> }
+                {activeTab === 'orders' && hasPermission("ادارة الطلبات") && <OrdersTable searchQuery={searchQuery} /> }
                 {activeTab === 'orders-silver' && hasPermission("طلبات السبائك") && <OrdersSilverTable />}
-                {activeTab === 'custom-orders' && hasPermission("ادارة الطلبات المخصصة") && <CustomOrdersPage />}
-                {activeTab === 'products' && hasPermission("ادارة المنتجات") && <ProductsList searchQuery={searchQuery} />}
-                {activeTab === 'categories' && hasPermission("التصنيفات") && <CategoriesList />}
-                {activeTab === 'clients' && hasPermission("قاعدة العملاء") && <ClientsPage />}
-                {activeTab === 'shipping-delivery' && hasPermission("الشحن والتوصيل") && <ShippingDelivery />}
-                {activeTab === 'pricing-calculator' && hasPermission("حاسبة الاسعار") && <PricingCalculator />}
-                {activeTab === 'admins' && hasPermission("فريق العمل") && <AdminsPage />}
-                {activeTab === 'reviws' && hasPermission("تقييمات العملاء") && <ReviewsPage />}
-                {activeTab === 'CashierSystem' && hasPermission("نظام الكاشير") && navigate("./cashier-system")}
-                
+                {activeTab === 'custom-orders' && hasPermission("ادارة الطلبات المخصصة") && <CustomOrdersPage /> }
+                {activeTab === 'products' && hasPermission("ادارة المنتجات") && <ProductsList searchQuery={searchQuery} /> }
+                {activeTab === 'categories' && hasPermission("التصنيفات") && <CategoriesList /> }
+                {activeTab === 'clients' && hasPermission("قاعدة العملاء") && <ClientsPage /> }
+                {activeTab === 'shipping-delivery' && hasPermission("الشحن والتوصيل") && <ShippingDelivery /> }
+                {activeTab === 'pricing-calculator' && hasPermission("حاسبة الاسعار") && <PricingCalculator /> }
+                {activeTab === 'admins' && hasPermission("فريق العمل") && <AdminsPage />  }
+                {activeTab === 'reviws' && hasPermission("تقييمات العملاء") && <ReviewsPage />  }
+                {activeTab === 'CashierSystem' && hasPermission("نظام الكاشير") && navigate("./cashier-system") }
+
                 {!hasPermission(allMenuItems.find(i => i.id === activeTab)?.key) && (
                   <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                     <FiShield size={50} className="mb-4 opacity-20" />

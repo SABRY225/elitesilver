@@ -44,7 +44,7 @@ const InvestmentSection = () => {
     const interval = setInterval(fetchAllData, 90000);
     return () => clearInterval(interval);
   }, [fetchAllData]);
-
+  
   const handleBuy = (item) => {
     navigate('/checkout-silver', { 
       state: { 
