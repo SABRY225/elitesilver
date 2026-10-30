@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { FiMail, FiArrowLeft, FiLoader } from 'react-icons/fi';
+import { Mail, ArrowLeft, Loader2, ShieldCheck, Sparkles } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import toast, { Toaster } from 'react-hot-toast';
-import imgLogo from '../images/logo.png'
+import toast from 'react-hot-toast';
+import imgLogo from '../images/logo.png';
+
 function LoginPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -13,90 +14,124 @@ function LoginPage() {
     e.preventDefault();
     setLoading(true);
 
-    // إنشاء "وعد" (Promise) لربط الإشعار بحالة الطلب
     const loginPromise = axios.post(`${import.meta.env.VITE_API_URL}/auth/login-request`, { email });
 
-    toast.promise(loginPromise, {
-      loading: 'جاري إرسال الرمز...',
-      success: (res) => {
-        localStorage.setItem('temp_email', email);
-        setTimeout(() => navigate('/verify-email'), 1500); // تأخير بسيط ليرى المستخدم النجاح
-        return 'تم إرسال الرمز بنجاح! افحص بريدك 🌸';
+    toast.promise(
+      loginPromise,
+      {
+        loading: 'جاري إرسال رمز التحقق الآمن...',
+        success: (res) => {
+          localStorage.setItem('temp_email', email);
+          setTimeout(() => navigate('/verify-email'), 1200);
+          return 'تم إرسال رمز الدخول بنجاح! يرجى مراجعة بريدك الإلكتروني ✨';
+        },
+        error: (err) => {
+          setLoading(false);
+          return err.response?.data?.error || 'عذراً، فشل إرسال رمز التحقق. تحقق من البريد وحاول ثانية ❌';
+        },
       },
-      error: (err) => {
-        setLoading(false);
-        return err.response?.data?.error || 'عذراً، فشل إرسال الرمز ❌';
-      },
-    }, {
-      style: {
-        borderRadius: '15px',
-        background: '#333',
-        color: '#fff',
-        fontFamily: 'Tajawal',
-      },
-      success: {
-        duration: 3000,
-        iconTheme: { primary: '#f43f5e', secondary: '#fff' },
-      },
-    });
+      {
+        style: {
+          borderRadius: '16px',
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          color: '#0f172a',
+          fontFamily: 'Cairo, sans-serif',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.08)'
+        },
+        success: {
+          iconTheme: { primary: '#10b981', secondary: '#ffffff' },
+        },
+        error: {
+          iconTheme: { primary: '#ef4444', secondary: '#ffffff' },
+        },
+      }
+    );
 
     try {
       await loginPromise;
     } catch (error) {
-      // الأخطاء يتم التعامل معها داخل toast.promise
+      // Handled in toast.promise
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#fdfaf9] flex items-center justify-center p-6 font-['Tajawal']" dir="rtl">
-      {/* مكون الإشعارات يجب أن يوضع هنا مرة واحدة */}
-      <Toaster position="top-center" reverseOrder={false} />
+    <div
+      className="min-h-screen bg-slate-100/80 flex items-center justify-center p-4 sm:p-6 font-cairo relative overflow-hidden selection:bg-slate-200 selection:text-slate-900"
+      dir="rtl"
+    >
+      {/* Background Ambient Glows */}
+      <div className="absolute top-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-100/50 blur-[130px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/3 w-80 h-80 bg-emerald-100/50 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl shadow-rose-100/50 p-10 border border-rose-50/50">
-        
-        {/* الشعار */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-[#333] rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-border-dark rotate-12 transition-transform hover:rotate-0 duration-500">
-              <img src={imgLogo} alt={imgLogo} width={350} height={350} />
+      <div className="max-w-md w-full relative z-10 bg-white rounded-[2.5rem] border border-slate-200 p-8 sm:p-12 shadow-xl shadow-slate-300/40 text-center">
+        {/* Elite Logo Badge */}
+        <div className="relative inline-flex items-center justify-center mb-6">
+          <div className="w-20 h-20 rounded-2xl bg-slate-50 border border-slate-200 p-3 shadow-sm flex items-center justify-center">
+            <img src={imgLogo} alt="Elite Silver 925" className="w-full h-full object-contain" />
           </div>
-          <h1 className="mt-6 text-2xl font-black text-slate-800">تسجيل الدخول</h1>
-          <p className="text-slate-500 mt-2 text-sm">أدخل بريدك الإلكتروني لنرسل لك رمز التحقق</p>
+          <span className="absolute -bottom-1 -left-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-white shadow-sm">
+            <Sparkles className="w-3.5 h-3.5 text-white" />
+          </span>
         </div>
 
-        {/* نموذج البريد الإلكتروني */}
+        {/* Header Title */}
+        <div className="mb-8">
+          <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-[0.2em] bg-slate-100 border border-slate-200 text-slate-700 inline-block mb-3">
+            Elite Silver Atelier • لوحة التحكم
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            تسجيل دخول الإدارة
+          </h1>
+          <p className="text-slate-500 text-xs sm:text-sm mt-2 leading-relaxed font-semibold">
+            أدخل بريدك الإلكتروني المعتمد لاستلام رمز الدخول الآمن بخطوتين (OTP)
+          </p>
+        </div>
+
+        {/* Email Form */}
         <form onSubmit={handleLogin} className="space-y-4">
-          <div className="relative group">
-            <FiMail className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-rose-500 transition-colors" />
-            <input 
-              required
-              type="email" 
-              placeholder="example@gmail.com"
-              className="w-full pr-12 pl-4 py-4 bg-slate-50 border border-border-dark rounded-2xl outline-none focus:border-border-dark focus:bg-white focus:ring-4 focus:ring-rose-50 transition-all text-left"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-            />
+          <div className="relative group text-right">
+            <label className="text-[11px] font-bold text-slate-600 block mb-1.5 mr-1 uppercase tracking-wider">
+              البريد الإلكتروني المهني
+            </label>
+            <div className="relative">
+              <Mail className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-slate-700 transition-colors" />
+              <input
+                required
+                type="email"
+                placeholder="admin@elitesilver925.com"
+                className="w-full pr-11 pl-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-400 text-xs sm:text-sm outline-none focus:border-slate-400 focus:bg-white transition-all text-left font-mono font-bold"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+              />
+            </div>
           </div>
-          
-          <button 
+
+          <button
             type="submit"
             disabled={loading}
-            className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-lg hover:bg-surface-card transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg hover:shadow-rose-200"
+            className="w-full mt-2 py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm tracking-wider uppercase transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
-              <FiLoader className="animate-spin text-2xl" />
+              <>
+                <Loader2 className="w-5 h-5 animate-spin text-white" />
+                <span>جاري الإرسال...</span>
+              </>
             ) : (
               <>
-                إرسال الرمز
-                <FiArrowLeft className="mt-1" />
+                <span>إرسال رمز التحقق</span>
+                <ArrowLeft className="w-4 h-4" />
               </>
             )}
           </button>
         </form>
 
-        <p className="mt-8 text-center text-[10px] text-slate-400 leading-relaxed px-4">
-          بالاستمرار، أنت توافق على شروط الخدمة وسياسة الخصوصية الخاصة بمتجر لمسة خاصة.
-        </p>
+        {/* Security Assurance Footer */}
+        <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-center gap-2 text-[11px] text-slate-500 font-semibold">
+          <ShieldCheck className="w-4 h-4 text-emerald-600" />
+          <span>بوابة دخول مشفرة ومؤمنة بنظام 256-bit SSL • إيليت سيلفر 925</span>
+        </div>
       </div>
     </div>
   );

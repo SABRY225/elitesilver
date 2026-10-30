@@ -1,3 +1,7 @@
+/* ===================================================
+   ELITE SILVER 925 - LUXURY BOUTIQUE MASTER STYLES
+   =================================================== */
+
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(100%); }
@@ -20,4 +24,104 @@
 
 .animate-fade-in {
   animation: fadeInUp 0.6s ease-out forwards;
+}
+
+/* Luxury Smooth Selection */
+::selection {
+  background-color: #d4d4d8;
+  color: #09090b;
+}
+
+::-moz-selection {
+  background-color: #d4d4d8;
+  color: #09090b;
+}
+
+/* Base Smooth Scrolling & Rendering */
+html {
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Enforce Cairo Font */
+body, .font-cairo, [dir="rtl"] {
+  font-family: 'Cairo', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Shimmer metallic shine animation */
+@keyframes silverShimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.text-silver-shimmer {
+  background: linear-gradient(
+    90deg,
+    #a1a1aa 0%,
+    #ffffff 25%,
+    #e4e4e7 50%,
+    #ffffff 75%,
+    #a1a1aa 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: silverShimmer 6s ease-in-out infinite;
+}
+
+/* Ultra-refined Glassmorphism Cards */
+.glass-luxury {
+  background: rgba(18, 18, 22, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-luxury-hover {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-luxury-hover:hover {
+  background: rgba(26, 26, 32, 0.85);
+  border-color: rgba(212, 212, 216, 0.25);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 25px rgba(212, 212, 216, 0.1);
+  transform: translateY(-4px);
+}
+
+/* Ambient Subtle Radial Glow */
+.ambient-glow-silver {
+  background: radial-gradient(circle at 50% 0%, rgba(212, 212, 216, 0.12) 0%, transparent 70%);
+}
+
+/* Subtle button hover ripple */
+.silver-btn-luxury {
+  background: linear-gradient(135deg, #e4e4e7 0%, #ffffff 50%, #d4d4d8 100%);
+  color: #09090b;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.silver-btn-luxury:hover {
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Admin Light Mode High Contrast Adjustments */
+.light table th {
+  color: #475569 !important;
+}
+
+.light table td {
+  color: #1e293b !important;
+}
+
+.light input, .light select, .light textarea {
+  color: #0f172a !important;
 }

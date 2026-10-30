@@ -1,9 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { FiTrendingUp, FiSettings, FiDollarSign, FiInfo, FiRefreshCw, FiClock, FiSave, FiCheckCircle } from 'react-icons/fi';
-import { GiCoins, GiGoldBar, GiWeight } from 'react-icons/gi'; 
-import { BsLayersHalf } from 'react-icons/bs';
+import { 
+  TrendingUp, 
+  Sliders, 
+  DollarSign, 
+  Clock, 
+  Save, 
+  CheckCircle2, 
+  RefreshCw,
+  Coins,
+  Layers,
+  Scale,
+  ShieldCheck,
+  Sparkles
+} from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const SilverPricingCalculator = () => {
@@ -12,12 +24,10 @@ const SilverPricingCalculator = () => {
   const [screenPrice, setScreenPrice] = useState(0); 
   const [lastUpdated, setLastUpdated] = useState('');
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false); // حالة حفظ العمولات
+  const [saving, setSaving] = useState(false);
   const [selectedType, setSelectedType] = useState('uae_kilo');
   const [result, setResult] = useState(0);
-  const [showSuccess, setShowSuccess] = useState(false);
 
-  // حالة العمولات (يتم جلبها من الباك أند)
   const [commissions, setCommissions] = useState({
     uae_kilo: 5,
     swiss_kilo: 9,
@@ -28,25 +38,21 @@ const SilverPricingCalculator = () => {
 
   const JOD_EXCHANGE_RATE = 0.7080;
 
-  // 1. جلب سعر الفضة والعمولات من الباك أند
   const fetchData = async () => {
     try {
       setLoading(true);
-      // جلب السعر العالمي
+      // Fetch live international silver spot price
       const priceRes = await axios.get('https://api.gold-api.com/price/XAG/USD');
       setScreenPrice(priceRes.data.price);
-      setLastUpdated(priceRes.data.updatedAtReadable);
+      setLastUpdated(priceRes.data.updatedAtReadable || new Date().toLocaleTimeString());
 
-      // جلب العمولات المحفوظة من السيرفر الخاص بك
+      // Fetch saved margins from backend
       const commRes = await axios.get(`${import.meta.env.VITE_API_URL}/commissions/silver`);
-      console.log(commRes.data.data);
-      
-      if (commRes.data.data) {
+      if (commRes.data?.data) {
         setCommissions(commRes.data.data);
       }
     } catch (err) {
-      console.error("Error fetching data:", err);
-      if(screenPrice === 0) setScreenPrice(30.50); 
+      if (screenPrice === 0) setScreenPrice(30.50); 
     } finally {
       setLoading(false);
     }
@@ -54,11 +60,10 @@ const SilverPricingCalculator = () => {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 300000);
+    const interval = setInterval(fetchData, 300000); // refresh every 5 min
     return () => clearInterval(interval);
   }, []);
 
-  // 2. تحديث السعر النهائي عند تغيير السعر العالمي أو النوع أو "العمولة"
   useEffect(() => {
     let finalPrice = 0;
     const s = parseFloat(screenPrice) || 0;
@@ -84,17 +89,16 @@ const SilverPricingCalculator = () => {
     setResult(finalPrice);
   }, [screenPrice, selectedType, commissions]);
 
-  // 3. دالة حفظ العمولات للباك أند
   const handleSaveCommissions = async () => {
+    const toastId = toast.loading("جاري حفظ وتثبيت العمولات...");
     try {
       setSaving(true);
       await axios.post(`${import.meta.env.VITE_API_URL}/commissions/silver`, {
         commissions: commissions
       });
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
+      toast.success("تم تثبيت وهوامش العمولات بنجاح في النظام", { id: toastId });
     } catch (err) {
-      alert("حدث خطأ أثناء حفظ العمولات");
+      toast.error("حدث خطأ أثناء حفظ العمولات", { id: toastId });
     } finally {
       setSaving(false);
     }
@@ -105,116 +109,182 @@ const SilverPricingCalculator = () => {
   };
 
   const calculatorTypes = [
-    { id: 'uae_kilo', name: 'كيلو إماراتي', icon: <GiGoldBar className="text-slate-400" /> },
-    { id: 'swiss_kilo', name: 'كيلو سويسري', icon: <GiGoldBar className="text-slate-300" /> },
-    { id: 'ounce_31', name: 'أونصة 31.1 جرام', icon: <GiWeight className="text-slate-500" /> },
-    { id: 'ounce_100', name: 'أونصة 100 جرام', icon: <BsLayersHalf className="text-slate-500" /> },
-    { id: 'lira_5', name: 'ليرة 5 جرام', icon: <GiCoins className="text-yellow-600" /> },
+    { id: 'uae_kilo', name: 'سبيكة 1 كيلو إماراتي', subtitle: 'Ag 999.0 • 1000g' },
+    { id: 'swiss_kilo', name: 'سبيكة 1 كيلو سويسري فاخر', subtitle: 'PAMP / Valcambi 999.0' },
+    { id: 'ounce_31', name: 'أونصة فضة 31.10 جرام', subtitle: '1 Troy Ounce 999.0' },
+    { id: 'ounce_100', name: 'سبيكة 100 جرام إسترليني/نقي', subtitle: '100 Grams Ingot' },
+    { id: 'lira_5', name: 'ليرة فضية استثمارية 5 جرام', subtitle: 'Silver Coin 5g' },
   ];
 
   return (
-    <div className={`min-h-screen bg-gray-50 pb-20 ${isRTL ? 'font-cairo' : 'font-sans'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        
-        {/* هيدر الصفحة */}
-        <div className="flex justify-between items-center mb-10">
-            <h2 className="text-3xl font-black text-slate-800 flex items-center gap-3">
-                <FiSettings className="animate-spin-slow" /> لوحة تحكم التسعير والعمولات
-            </h2>
-            <button 
-                onClick={handleSaveCommissions}
-                disabled={saving}
-                className="bg-slate-800 text-white px-8 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-slate-700 transition-all active:scale-95 disabled:opacity-50"
-            >
-                {saving ? <FiRefreshCw className="animate-spin" /> : <FiSave />}
-                {isRTL ? 'حفظ كافة التعديلات' : 'Save All Changes'}
-            </button>
+    <div className="space-y-6" dir="rtl">
+      
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 rounded-2xl bg-white border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800">
+            <Sliders className="w-5 h-5 text-slate-800" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 tracking-wide">حاسبة تسعير السبائك وهوامش الفضة العالمية</h2>
+            <p className="text-slate-500 text-xs mt-0.5">
+              ربط مباشر مع مؤشر بورصة لندن XAG/USD والتحويل للدينار الأردني
+            </p>
+          </div>
         </div>
 
-        {/* تنبيه النجاح */}
-        {showSuccess && (
-            <motion.div initial={{opacity:0, y:-20}} animate={{opacity:1, y:0}} className="mb-6 p-4 bg-green-100 text-green-700 rounded-xl flex items-center gap-2 border border-green-200 font-bold">
-                <FiCheckCircle /> تم تحديث العمولات في قاعدة البيانات بنجاح!
-            </motion.div>
-        )}
+        <div className="flex items-center gap-2.5 w-full sm:w-auto">
+          <button
+            onClick={fetchData}
+            disabled={loading}
+            className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 transition-all active:scale-95"
+            title="تحديث سعر البورصة"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
 
-        <div className="grid lg:grid-cols-2 gap-10">
-          
-          {/* الجانب الأيسر: التحكم في العمولات */}
-          <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100">
-            <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2 border-b pb-4">
-              <FiDollarSign className="text-green-600" /> ضبط عمولة كل منتج (USD)
-            </h3>
-
-            <div className="space-y-6">
-              {calculatorTypes.map((type) => (
-                <div key={type.id} className={`flex items-center justify-between p-4 rounded-2xl border ${selectedType === type.id ? 'border-slate-500 bg-slate-50' : 'border-gray-50'}`}>
-                  <div className="flex items-center gap-3" onClick={() => setSelectedType(type.id)}>
-                    <span className="text-2xl cursor-pointer">{type.icon}</span>
-                    <span className="font-bold text-gray-700 cursor-pointer">{type.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-400 text-xs font-bold">+</span>
-                    <input
-                      type="number"
-                      className="w-24 px-3 py-2 bg-white border border-gray-200 rounded-lg text-center font-bold text-slate-800 focus:border-slate-500 outline-none shadow-sm"
-                      value={commissions[type.id]}
-                      onChange={(e) => handleCommChange(type.id, e.target.value)}
-                    />
-                    <span className="text-gray-500 text-xs font-bold">$</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* الجانب الأيمن: معاينة السعر العالمي والنتيجة */}
-          <div className="flex flex-col gap-6">
-            
-            {/* مدخل السعر العالمي */}
-            <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100">
-                <label className="block text-sm font-bold text-gray-600 mb-4 italic">سعر أونصة الفضة عالمياً (تحديث تلقائي)</label>
-                <div className="relative">
-                    <FiTrendingUp className="absolute top-1/2 left-4 -translate-y-1/2 text-slate-400 text-xl" />
-                    <input
-                        type="number"
-                        className="w-full pl-12 pr-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-2xl font-black text-slate-800 focus:border-slate-500 outline-none transition-all"
-                        value={screenPrice}
-                        onChange={(e) => setScreenPrice(e.target.value)}
-                    />
-                </div>
-                <div className="mt-4 flex items-center gap-2 text-slate-400 text-xs">
-                    <FiClock /> آخر تحديث: {lastUpdated || 'جاري التحميل...'}
-                </div>
-            </div>
-
-            {/* معاينة النتيجة النهائية */}
-            <div className="bg-slate-800 rounded-3xl p-10 shadow-2xl relative overflow-hidden text-white">
-              <GiGoldBar className="absolute -bottom-10 -right-10 text-white/5 text-9xl rotate-12" />
-              
-              <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-xs">معاينة السعر للعميل (أردني)</h3>
-              <div className="flex items-baseline gap-4 mb-6 relative z-10">
-                <span className="text-6xl font-black text-white">
-                  {result.toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
-                </span>
-                <span className="text-2xl font-bold text-slate-400">د.أ</span>
-              </div>
-              
-              <div className="p-4 bg-white/5 rounded-2xl text-sm font-medium border border-white/10 relative z-10 backdrop-blur-sm">
-                <div className="flex justify-between mb-1">
-                    <span>المنتج المحدد:</span>
-                    <span className="font-bold text-silver-300">{calculatorTypes.find(t => t.id === selectedType)?.name}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span>العمولة المضافة:</span>
-                    <span className="font-bold text-green-400">${commissions[selectedType]} +</span>
-                </div>
-              </div>
-            </div>
-
-          </div>
+          <button 
+            onClick={handleSaveCommissions}
+            disabled={saving}
+            className="flex-1 sm:flex-none bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-sm flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+          >
+            {saving ? <RefreshCw className="w-4 h-4 animate-spin text-white" /> : <Save className="w-4 h-4 text-white stroke-[2.5]" />}
+            <span>حفظ واعتماد العمولات</span>
+          </button>
         </div>
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Left Column: Commission Configuration */}
+        <div className="lg:col-span-7 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-emerald-600" />
+              <span>ضبط عمولة وسبريد المتجر (USD)</span>
+            </h3>
+            <span className="text-[11px] text-slate-500 font-mono font-bold">سعر الصرف: 1 USD = 0.708 JOD</span>
+          </div>
+
+          <div className="space-y-2.5">
+            {calculatorTypes.map((type) => {
+              const isSelected = selectedType === type.id;
+
+              return (
+                <div 
+                  key={type.id} 
+                  onClick={() => setSelectedType(type.id)}
+                  className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer ${
+                    isSelected 
+                      ? 'bg-indigo-50 border-indigo-200 shadow-sm' 
+                      : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                      isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      <Coins className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900">{type.name}</h4>
+                      <p className={`text-[10px] font-mono mt-0.5 ${isSelected ? 'text-indigo-600 font-bold' : 'text-slate-500'}`}>
+                        {type.subtitle}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <span className="text-slate-400 text-xs font-bold font-mono">+</span>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="0.1"
+                        className="w-20 px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-center font-mono font-bold text-xs text-slate-900 outline-none focus:border-slate-400"
+                        value={commissions[type.id]}
+                        onChange={(e) => handleCommChange(type.id, e.target.value)}
+                      />
+                      <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-mono font-bold">$</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Right Column: Live Trading Screen & Result Output */}
+        <div className="lg:col-span-5 space-y-4">
+          
+          {/* Live Spot Silver Ticker */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <TrendingUp className="w-4 h-4 text-emerald-600" />
+                <span>سعر أونصة الفضة عالمياً (XAG/USD)</span>
+              </label>
+              <span className="text-[10px] text-emerald-600 font-mono font-bold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>مباشر</span>
+              </span>
+            </div>
+
+            <div className="relative">
+              <input
+                type="number"
+                step="0.01"
+                className="w-full pl-16 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-mono font-black text-2xl text-slate-900 outline-none focus:border-slate-400 transition-all"
+                value={screenPrice}
+                onChange={(e) => setScreenPrice(e.target.value)}
+              />
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-xs font-bold text-slate-500">USD / oz</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono">
+              <Clock className="w-3.5 h-3.5 text-slate-400" />
+              <span>آخر مزامنة: {lastUpdated || 'جاري التحديث...'}</span>
+            </div>
+          </div>
+
+          {/* Result Card */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden space-y-4">
+            <div>
+              <span className="text-[10px] font-mono tracking-widest uppercase text-slate-500 font-bold block mb-1">
+                السعر الإجمالي للعميل (بالدينار الأردني)
+              </span>
+              <div className="flex items-baseline gap-2">
+                <span className="font-mono font-black text-4xl text-slate-900 tracking-tight">
+                  {result.toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
+                </span>
+                <span className="text-sm font-bold text-slate-500 font-sans">د.أ</span>
+              </div>
+            </div>
+
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5 text-xs">
+              <div className="flex justify-between text-slate-600">
+                <span>الصنف المختار:</span>
+                <span className="font-bold text-slate-900">
+                  {calculatorTypes.find(t => t.id === selectedType)?.name}
+                </span>
+              </div>
+              <div className="flex justify-between text-slate-600">
+                <span>العمولة المحسوبة:</span>
+                <span className="font-mono font-bold text-emerald-700">
+                  +${commissions[selectedType]} USD
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+              <span>يتم تطبيق السعر المعتمد تلقائياً في واجهة متجر السبائك للمشترين</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
     </div>
   );
 };

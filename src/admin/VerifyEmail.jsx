@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FiMail, FiArrowRight, FiLoader } from 'react-icons/fi';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 function VerifyEmail() {
   const [otp, setOtp] = useState(new Array(4).fill(""));
@@ -72,30 +72,38 @@ function VerifyEmail() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fdfaf9] flex items-center justify-center p-6 font-['Tajawal']" dir="rtl">
-      <Toaster position="top-center" />
+    <div
+      className="min-h-screen bg-slate-100/80 flex items-center justify-center p-4 sm:p-6 font-cairo relative overflow-hidden selection:bg-slate-200 selection:text-slate-900"
+      dir="rtl"
+    >
+      {/* Background Ambient Glows */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-100/50 blur-[130px] rounded-full pointer-events-none" />
 
-      <div className="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 p-10 text-center">
-
-        <div className="w-20 h-20 bg-rose-100 text-rose-500 rounded-full mx-auto flex items-center justify-center mb-6">
-          <FiMail className="text-4xl animate-pulse" />
+      <div className="max-w-md w-full relative z-10 bg-white rounded-[2.5rem] border border-slate-200 p-8 sm:p-12 shadow-xl shadow-slate-300/40 text-center">
+        {/* Animated Security Icon */}
+        <div className="w-20 h-20 bg-slate-50 border border-slate-200 text-slate-700 rounded-3xl mx-auto flex items-center justify-center mb-6 shadow-sm">
+          <FiMail className="w-8 h-8 text-indigo-600 animate-pulse" />
         </div>
 
-        <h2 className="text-2xl font-black text-slate-800 mb-2">تحقق من بريدك</h2>
-        <p className="text-slate-500 mb-8 leading-relaxed">
-          أرسلنا رمز التحقق إلى <br />
-          <span className="text-slate-800 font-bold border-b-2 border-rose-200">{email}</span>
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2 tracking-tight">
+          تأكيد رمز الدخول الآمن
+        </h2>
+        <p className="text-slate-500 text-xs sm:text-sm mb-8 leading-relaxed font-semibold">
+          تم إرسال رمز الأمان المكون من 4 أرقام إلى: <br />
+          <span className="text-slate-900 font-mono font-bold text-sm sm:text-base border-b border-slate-300 pb-0.5 inline-block mt-1">
+            {email}
+          </span>
         </p>
 
         {/* مربعات إدخال الرمز */}
-        <div className="flex justify-center gap-3 mb-8" dir="ltr">
+        <div className="flex justify-center gap-3 sm:gap-4 mb-8" dir="ltr">
           {otp.map((data, index) => (
             <input
               key={index}
               type="text"
               maxLength="1"
               disabled={loading}
-              className="w-14 h-16 border-2 border-slate-100 rounded-2xl text-center text-2xl font-black text-rose-500 focus:border-rose-500 focus:ring-4 focus:ring-rose-100 outline-none transition-all disabled:opacity-50"
+              className="w-13 h-16 sm:w-16 sm:h-18 bg-slate-50 border-2 border-slate-200 rounded-2xl text-center text-2xl sm:text-3xl font-mono font-black text-slate-900 focus:border-slate-800 focus:bg-white focus:ring-4 focus:ring-slate-100 outline-none transition-all disabled:opacity-50"
               value={data}
               onChange={e => handleChange(e.target, index)}
               onFocus={e => e.target.select()}
@@ -105,27 +113,35 @@ function VerifyEmail() {
 
         <button
           onClick={handleVerify}
-          disabled={loading}
-          className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-lg hover:bg-slate-800 transition-all shadow-lg active:scale-[0.98] mb-6 flex items-center justify-center gap-2"
+          disabled={loading || otp.join("").length < 4}
+          className="w-full py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm tracking-wider uppercase transition-all shadow-md active:scale-[0.98] mb-6 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {loading ? <FiLoader className="animate-spin text-2xl" /> : "تأكيد الرمز"}
+          {loading ? (
+            <FiLoader className="animate-spin text-xl text-white" />
+          ) : (
+            <>
+              <span>تأكيد وتسجيل الدخول</span>
+              <FiArrowRight className="rotate-180 text-lg" />
+            </>
+          )}
         </button>
 
-        <p className="text-slate-400 text-sm">
-          لم يصلك الرمز؟
+        <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+          <span>لم يصلك الرمز؟</span>
           <button
             onClick={handleResend}
-            className="text-rose-500 font-bold hover:underline mr-1 disabled:opacity-50"
+            className="text-slate-800 hover:text-black font-bold transition-colors cursor-pointer"
           >
-            إعادة إرسال
+            إعادة إرسال رمز جديد
           </button>
-        </p>
+        </div>
 
         <button
           onClick={() => navigate('/login')}
-          className="mt-8 flex items-center justify-center gap-2 text-slate-400 hover:text-rose-500 transition-colors mx-auto text-sm"
+          className="mt-6 flex items-center justify-center gap-2 text-slate-500 hover:text-slate-800 transition-colors mx-auto text-xs font-bold cursor-pointer"
         >
-          العودة لتسجيل الدخول <FiArrowRight className="rotate-180" />
+          <span>العودة لصفحة الدخول</span>
+          <FiArrowRight className="text-sm" />
         </button>
       </div>
     </div>

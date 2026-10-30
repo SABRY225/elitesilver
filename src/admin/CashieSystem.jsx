@@ -1,15 +1,17 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import axios from 'axios';
+import { X, ArrowRight, ShoppingBag, RotateCcw } from 'lucide-react';
 
-// استيراد المكونات
+// Cashier Step Components
 import CustomerStep from './Cashier/CustomerStep';
 import ProductsStep from './Cashier/ProductsStep';
 import PaymentStep from './Cashier/PaymentStep';
 import OrderTypeStep from './Cashier/OrderTypeStep';
 import StatsGrid from './Cashier/StatsGrid';
 import ActivitySlider from './Cashier/ActivitySlider';
+
 const CashieSystem = () => {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -26,10 +28,12 @@ const CashieSystem = () => {
     stats: { buyCount: 0, sellCount: 0, repairCount: 0, newCustomers: 0 },
     recentActivities: []
   });
+
   const totalAmount = useMemo(() => {
     return cart.reduce((sum, item) => sum + (Number(item.price || 0) * (item.quantity || 1)), 0);
   }, [cart]);
-  React.useEffect(() => {
+
+  useEffect(() => {
     const fetchDashboard = async () => {
       try {
         const API_URL = import.meta.env.VITE_API_URL;
@@ -37,10 +41,13 @@ const CashieSystem = () => {
           headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
         });
         setDashboardData(data);
-      } catch (err) { console.error("Error fetching stats"); }
+      } catch (err) {
+        // Silent catch for stats
+      }
     };
     if (step === 0) fetchDashboard();
   }, [step]);
+
   const resetSystem = useCallback(() => {
     setStep(0);
     setOrderType(null);
@@ -52,7 +59,7 @@ const CashieSystem = () => {
     setPaymentMethod('cash');
   }, []);
 
-  // 1. البحث عن عميل
+  // 1. Customer search
   const handleSearchCustomer = async (e) => {
     if (e) e.preventDefault();
     if (phoneNumber.length < 9) return toast.error("رقم الهاتف غير مكتمل");
@@ -68,20 +75,19 @@ const CashieSystem = () => {
     } catch (error) {
       setCustomer(null);
       setIsNewCustomer(true);
-      toast.error("العميل غير مسجل، يرجى ملء البيانات");
+      toast.error("العميل غير مسجل، يرجى استكمال البيانات");
     } finally {
       setLoading(false);
     }
   };
 
-  // 2. حفظ العملية النهائية (ربط العميل + الفاتورة)
+  // 2. Finalize POS Order
   const handleFinalize = async () => {
     setLoading(true);
     try {
       const API_URL = import.meta.env.VITE_API_URL;
       let finalCustomerId = customer?.id;
 
-      // أ- إذا كان عميل جديد، نقوم بتسجيله أولاً
       if (isNewCustomer) {
         const customerRes = await axios.post(`${API_URL}/auth/customers/register`, {
           name: newCustomerData.name,
@@ -92,12 +98,10 @@ const CashieSystem = () => {
         });
         finalCustomerId = customerRes.data.id;
       }
-    console.log(cart);
 
-      // ب- إرسال بيانات الفاتورة
       const orderPayload = {
         customerId: finalCustomerId,
-        orderType: orderType, // 'buy', 'sell', 'repair'
+        orderType: orderType,
         paymentMethod: paymentMethod,
         totalAmount: totalAmount,
         items: cart.map(item => ({
@@ -107,7 +111,6 @@ const CashieSystem = () => {
           unitPrice: item.price
         }))
       };
-    console.log(orderPayload);
     
       await axios.post(`${API_URL}/orders/cashier-system`, orderPayload, {
         headers: {
@@ -115,10 +118,9 @@ const CashieSystem = () => {
         }
       });
 
-      toast.success("تم حفظ الفاتورة بنجاح وتحديث نقاط العميل");
+      toast.success("تم إصدار الفاتورة وتحديث نقاط الولاء بنجاح");
       resetSystem();
     } catch (error) {
-      console.error(error);
       toast.error(error.response?.data?.message || "حدث خطأ أثناء إتمام العملية");
     } finally {
       setLoading(false);
@@ -152,57 +154,62 @@ const CashieSystem = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FDFDFD] pb-10 font-arabic" dir="rtl">
-      <Toaster position="top-center" reverseOrder={false} />
+    <div className="space-y-6" dir="rtl">
+
+
+      {/* Progress Bar */}
       {step > 0 && (
-        <div className="w-full h-1.5 bg-gray-100 sticky top-0 z-50">
+        <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-black"
+            className="h-full bg-gradient-to-r from-silver-400 to-silver-100"
             initial={{ width: 0 }}
             animate={{ width: `${(step / (stepsContent.length - 1)) * 100}%` }}
           />
         </div>
       )}
 
-      <main className="container mx-auto pt-8 px-4">
+      {/* Step Header */}
+      {step > 0 && (
+        <div className="flex justify-between items-center p-4 rounded-xl bg-[#0c0d12]/90 border border-white/10">
+          <span className="bg-silver-400/10 border border-silver-400/20 px-3 py-1 rounded-full text-xs font-bold text-silver-200">
+            {orderType === 'buy' ? 'فاتورة بيع مشغولات' : orderType === 'sell' ? 'شراء كسر فضة من عميل' : 'قسم الصيانة والتلميع'}
+          </span>
+          <span className="text-silver-400 text-xs font-mono">الخطوة {step} من 3</span>
+        </div>
+      )}
+
+      <main>
         {step === 0 && (
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
             <StatsGrid stats={dashboardData.stats} />
             <ActivitySlider activities={dashboardData.recentActivities} />
-          </motion.div>
-        )}
-        {step > 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-between items-center mb-6 px-4">
-            <span className="bg-gray-100 px-4 py-1 rounded-full text-xs font-bold text-gray-500 uppercase">
-              {orderType === 'buy' ? 'فاتورة شراء' : orderType === 'sell' ? 'شراء من عميل' : 'طلب صيانة'}
-            </span>
-            <span className="text-gray-400 text-xs font-medium">الخطوة {step} من 3</span>
           </motion.div>
         )}
 
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
-            initial={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, x: 15 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
+            exit={{ opacity: 0, x: -15 }}
+            transition={{ duration: 0.2 }}
           >
             {stepsContent[step]}
           </motion.div>
         </AnimatePresence>
       </main>
 
+      {/* Cancel Transaction Button */}
       {step > 0 && (
-        <motion.button
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          whileHover={{ scale: 1.05 }}
-          onClick={resetSystem}
-          className="fixed bottom-6 left-6 bg-white border border-red-100 text-red-500 px-6 py-3 rounded-2xl text-xs font-bold shadow-xl hover:bg-red-50 transition-all z-40"
-        >
-          إلغاء العملية
-        </motion.button>
+        <div className="pt-4 flex justify-end">
+          <button
+            onClick={resetSystem}
+            className="inline-flex items-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>إلغاء العملية الحالية</span>
+          </button>
+        </div>
       )}
     </div>
   );

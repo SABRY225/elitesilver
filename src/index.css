@@ -3,11 +3,11 @@
 @tailwind utilities;
 
 :root {
-  font-family: "Cairo", system-ui, sans-serif;
+  font-family: 'Tajawal', 'Alexandria', sans-serif;
 }
 
 * {
-  font-family: "Cairo", system-ui, sans-serif;
+  font-family: 'Tajawal', 'Alexandria', sans-serif;
 }
 /* إخفاء السهم الافتراضي في جميع المتصفحات */
 select {
@@ -245,20 +245,6 @@ select::-ms-expand {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2rem;
-  }
-}
-
-/* Dark Mode Support for Luxury Theme */
-@media (prefers-color-scheme: dark) {
-  .luxury-bg {
-    background-image: 
-      radial-gradient(circle at 25% 25%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
-      radial-gradient(circle at 75% 75%, rgba(115, 115, 115, 0.08) 0%, transparent 50%);
-  }
-  
-  .jewelry-card {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.8) 100%);
-    border-color: rgba(192, 192, 192, 0.3);
   }
 }
 

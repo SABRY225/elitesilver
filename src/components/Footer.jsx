@@ -1,193 +1,282 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  FiInstagram, FiPhone, FiMail,
-  FiMapPin, FiSend, FiStar, FiChevronRight
-} from 'react-icons/fi';
-import { FaTiktok, FaWhatsapp } from 'react-icons/fa';
+  MapPin,
+  Phone,
+  Mail,
+  Send,
+  Sparkles,
+  ShieldCheck,
+  ChevronRight,
+  ChevronLeft,
+  ArrowUp,
+  CheckCircle2
+} from 'lucide-react';
+import { FaInstagram, FaWhatsapp, FaTiktok, FaFacebookF } from 'react-icons/fa';
+import toast from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
+import LogoImg from '../images/logo.png';
 
 function Footer() {
   const currentYear = new Date().getFullYear();
-  const { t, language } = useLanguage();
-  const isAr = language === 'ar';
+  const { t, language, isRTL } = useLanguage();
+  const [email, setEmail] = useState('');
+
+  // معالجة الاشتراك في النشرة البريدية
+  const handleNewsletterSubmit = (e) => {
+    e.preventDefault();
+    if (!email || !email.includes('@')) {
+      toast.error(isRTL ? 'يرجى إدخال بريد إلكتروني صالح' : 'Please enter a valid email address');
+      return;
+    }
+    toast.success(
+      isRTL
+        ? 'شكراً لانضمامك إلى دائرة نخبة إيليت سيلفر!'
+        : 'Thank you for joining Elite Silver circle!'
+    );
+    setEmail('');
+  };
+
+  // العودة لأعلى الصفحة بسلاسة
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
-    <footer className="relative bg-[#0d0d0d] text-gray-400 pt-24 pb-10 overflow-hidden border-t border-silver-900/30" dir={isAr ? 'rtl' : 'ltr'}>
+    <footer
+      className="relative bg-[#070709] text-gray-400 pt-20 sm:pt-28 pb-12 overflow-hidden border-t border-silver-900/40 select-none"
+      dir={isRTL ? 'rtl' : 'ltr'}
+    >
+      {/* 1. عناصر الإضاءة الخلفية الفاخرة */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[1px] bg-gradient-to-r from-transparent via-silver-400/40 to-transparent" />
+      <div className="absolute -top-32 -left-32 w-[450px] h-[450px] bg-silver-500/5 blur-[140px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-10 -right-32 w-[450px] h-[450px] bg-silver-400/5 blur-[140px] rounded-full pointer-events-none" />
 
-      {/* عناصر جمالية في الخلفية */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[1px] bg-gradient-to-r from-transparent via-silver-500/50 to-transparent" />
-      <div className="absolute -top-24 -left-24 w-96 h-96 bg-silver-600/5 blur-[120px] rounded-full" />
+      <div className="container mx-auto px-4 sm:px-6 relative z-10 max-w-7xl">
+        {/* 2. الشبكة الرئيسية لأقسام الفوتر */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 mb-16 sm:mb-20">
+          
+          {/* العمود 1: هوية المتجر والشبكات الاجتماعية (4 أعمدة) */}
+          <div className="lg:col-span-4 flex flex-col items-start space-y-6">
+            <Link to="/" className="inline-block transition-transform hover:scale-105 duration-300">
+              <img
+                src={LogoImg}
+                alt="Elite Silver 925"
+                className="h-14 sm:h-16 w-auto object-contain filter drop-shadow-[0_4px_15px_rgba(255,255,255,0.1)]"
+              />
+            </Link>
 
-      <div className="container mx-auto px-6 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
+            <p className="text-sm leading-relaxed text-silver-300/80 font-light max-w-sm">
+              {t('brandDesc')}
+            </p>
 
-          {/* Brand Identity Section */}
-          <div className="flex flex-col items-start space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="relative group">
-                <div className="w-12 h-12 border border-silver-500/50 flex items-center justify-center rotate-45 group-hover:rotate-[225deg] transition-transform duration-700">
-                  <FiStar className="text-silver-500 -rotate-45 group-hover:-rotate-[225deg] transition-transform duration-700" />
+            {/* شارة الضمان الإيطالي */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-silver-300">
+              <Sparkles className="w-3.5 h-3.5 text-silver-300" />
+              <span>{isRTL ? 'فضة إسترلينية إيطالية عيار 925 أصلية' : 'Authentic 925 Italian Sterling Silver'}</span>
+            </div>
+
+            {/* قنوات التواصل الاجتماعي */}
+            <div className="flex items-center gap-3 pt-2">
+              <SocialLink
+                href="https://www.instagram.com/elitesilver.jo"
+                icon={<FaInstagram className="w-4 h-4" />}
+                label="Instagram"
+              />
+              <SocialLink
+                href="https://wa.me/962782261996"
+                icon={<FaWhatsapp className="w-4 h-4" />}
+                label="WhatsApp"
+              />
+              <SocialLink
+                href="https://www.tiktok.com/@elitesilver.jo"
+                icon={<FaTiktok className="w-4 h-4" />}
+                label="TikTok"
+              />
+              <SocialLink
+                href="https://facebook.com"
+                icon={<FaFacebookF className="w-3.5 h-3.5" />}
+                label="Facebook"
+              />
+            </div>
+          </div>
+
+          {/* العمود 2: روابط سريعة (2 أعمدة) */}
+          <div className="lg:col-span-2">
+            <h3 className="text-white text-xs font-bold uppercase tracking-[0.2em] mb-6 flex items-center gap-2 border-b border-white/10 pb-3">
+              <span>{t('quickLinks')}</span>
+            </h3>
+            <ul className="space-y-3.5">
+              <FooterLink to="/">{t('home') || (isRTL ? 'الرئيسية' : 'Home')}</FooterLink>
+              <FooterLink to="/category/all">{t('collections') || (isRTL ? 'التشكيلات' : 'Collections')}</FooterLink>
+              <FooterLink to="/checkout-silver">{t('silverInvestTitle') || (isRTL ? 'سبائك الاستثمار' : 'Silver Bullion')}</FooterLink>
+              <FooterLink to="/custom-order">{t('customOrder') || (isRTL ? 'طلب تفصيل خاص' : 'Custom Order')}</FooterLink>
+              <FooterLink to="/cart">{t('shoppingCart') || (isRTL ? 'سلة التسوق' : 'Cart')}</FooterLink>
+              <FooterLink to="/wishlist">{t('myWishlist') || (isRTL ? 'قائمة المفضلة' : 'Wishlist')}</FooterLink>
+            </ul>
+          </div>
+
+          {/* العمود 3: السياسات والشروط (2 أعمدة) */}
+          <div className="lg:col-span-2">
+            <h3 className="text-white text-xs font-bold uppercase tracking-[0.2em] mb-6 flex items-center gap-2 border-b border-white/10 pb-3">
+              <span>{isRTL ? 'السياسات والضمان' : 'Policies & Care'}</span>
+            </h3>
+            <ul className="space-y-3.5">
+              <FooterLink to="/terms-conditions">{t('TermsConditions')}</FooterLink>
+              <FooterLink to="/privacy-policy">{t('privacyPolicy')}</FooterLink>
+              <FooterLink to="/shipping-delivery">{t('ShippingDeliveryPolicy')}</FooterLink>
+              <FooterLink to="/refund-policy">{t('refundPolicy')}</FooterLink>
+            </ul>
+          </div>
+
+          {/* العمود 4: النشرة البريدية ومعلومات الفروع (4 أعمدة) */}
+          <div className="lg:col-span-4 flex flex-col space-y-6">
+            {/* صندوق النشرة البريدية الفاخر */}
+            <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-6 sm:p-7 rounded-2xl border border-white/10 backdrop-blur-md shadow-xl">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="w-4 h-4 text-silver-300" />
+                <h4 className="text-white text-xs font-bold uppercase tracking-[0.2em]">
+                  {t('newsletter')}
+                </h4>
+              </div>
+
+              <p className="text-xs text-silver-400 font-light mb-5 leading-relaxed">
+                {isRTL
+                  ? 'انضم لدائرة النخبة واحصل على وصول مبكر للتشكيلات الجديدة والعروض الحصرية.'
+                  : 'Join our elite circle for private access to new handcrafted collections.'}
+              </p>
+
+              <form onSubmit={handleNewsletterSubmit} className="relative">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={t('enterEmail')}
+                  className="w-full bg-black/60 border border-white/15 py-3.5 px-4 text-xs tracking-wider focus:outline-none focus:border-silver-400 transition-colors text-white rounded-xl placeholder:text-gray-600"
+                />
+                <button
+                  type="submit"
+                  aria-label="Subscribe to newsletter"
+                  className={`absolute ${
+                    isRTL ? 'left-1.5' : 'right-1.5'
+                  } top-1.5 bottom-1.5 silver-btn-luxury px-4 rounded-lg flex items-center justify-center text-black font-bold text-xs transition-all active:scale-95 cursor-pointer`}
+                >
+                  <Send className={`w-3.5 h-3.5 ${isRTL ? 'rotate-180' : ''}`} />
+                </button>
+              </form>
+            </div>
+
+            {/* تفاصيل فروع الأردن والتواصل السريع */}
+            <div className="space-y-3 pt-2 text-xs">
+              <div className="flex items-start gap-3">
+                <MapPin className="w-4 h-4 text-silver-400 shrink-0 mt-0.5" />
+                <div className="text-silver-400/90 leading-snug">
+                  <div className="font-bold text-white mb-0.5">{isRTL ? 'فروعنا في الأردن:' : 'Our Branches:'}</div>
+                  <div>{t('address1')}</div>
+                  <div className="mt-1">{t('address2')}</div>
+                  <div className="mt-1">{t('address3')}</div>
                 </div>
               </div>
-              <h3 className="text-white text-2xl font-bold tracking-tighter uppercase font-serif">
-                {t('brandName')} <span className="text-silver-500 block text-xs tracking-[0.3em] font-sans font-light mt-1 opacity-80">{t('brandTag')}</span>
-              </h3>
-            </div>
 
-            <p className="text-sm leading-relaxed opacity-70 font-light max-w-xs">
-              {t('brandDesc') || "Elevating your everyday style with handcrafted 925 sterling silver jewelry. Timeless elegance for the modern soul."}
-            </p>
+              <div className="flex items-center gap-3 pt-1">
+                <Phone className="w-4 h-4 text-silver-400 shrink-0" />
+                <div className="flex items-center gap-3 font-mono text-silver-300 text-xs">
+                  <a href="tel:+962782261996" className="hover:text-white transition-colors">
+                    +962 7822 61996
+                  </a>
+                  <span>•</span>
+                  <a href="tel:+962778504817" className="hover:text-white transition-colors">
+                    +962 7785 04817
+                  </a>
+                </div>
+              </div>
 
-            <div className="flex gap-4 pt-4">
-              <SocialLink href="https://instagram.com" icon={<FiInstagram />} label="Instagram" />
-              <SocialLink href="https://whatsapp.com" icon={<FaWhatsapp />} label="WhatsApp" />
-              <SocialLink href="https://tiktok.com" icon={<FaTiktok />} label="TikTok" />
-            </div>
-          </div>
-
-          {/* Luxury Navigation */}
-          <div className="lg:pl-10">
-            <h3 className="text-white text-xs font-bold mb-10 uppercase tracking-[0.2em] border-b border-silver-900/50 pb-4 inline-block">
-              {t('quickLinks')}
-            </h3>
-            <ul className="space-y-4">
-              <FooterLink href="/terms-conditions">{t('TermsConditions')}</FooterLink>
-              <FooterLink href="/privacy-policy">{t('privacyPolicy')}</FooterLink>
-              {/* <FooterLink href="/cancellation-policy">{t('CancellationPolicy')}</FooterLink> */}
-              <FooterLink href="/shipping-delivery">{t('ShippingDeliveryPolicy')}</FooterLink>
-              <FooterLink href="/refund-policy">{t('refundPolicy')}</FooterLink>
-            </ul>
-          </div>
-
-          {/* Contact Details */}
-          <div>
-            <h3 className="text-white text-xs font-bold mb-10 uppercase tracking-[0.2em] border-b border-silver-900/50 pb-4 inline-block">
-              {t('contactInfo')}
-            </h3>
-            <ul className="space-y-8">
-              {/* العناوين الثلاثة */}
-              <ContactItem
-                icon={<FiMapPin />}
-                title={isAr ? "فروعنا" : "Our Locations"}
-                links={[
-                  t('address1'),
-                  t('address2'),
-                  t('address3')
-                ]}
-              />
-
-              {/* أرقام التواصل الثلاثة */}
-              <ContactItem
-                icon={<FiPhone />}
-                title={isAr ? "اتصل بنا" : "Call Us"}
-                links={[
-                  "+962 7822 61996",
-                  "+962 7785 04817",
-                  "+962 7954 31499"
-                ]}
-              />
-
-              {/* البريد الإلكتروني */}
-              <ContactItem
-                icon={<FiMail />}
-                title={isAr ? "البريد الإلكتروني" : "Email"}
-                links={["Elitesilverjo@gmail.com"]}
-              />
-            </ul>
-          </div>
-
-          {/* Premium Newsletter */}
-          <div className="bg-white/[0.03] p-8 rounded-2xl border border-white/5 backdrop-blur-sm">
-            <h3 className="text-white text-xs font-bold mb-4 uppercase tracking-[0.2em]">
-              {t('newsletter')}
-            </h3>
-            <p className="text-xs text-gray-500 mb-6 leading-relaxed ">
-              Join our elite circle for early access to new collections and private sales.
-            </p>
-            <div className="relative group">
-              <input
-                type="email"
-                placeholder={t('enterEmail')}
-                className="w-full bg-[#1a1a1a] border border-white/10 py-4 px-4 text-[11px] tracking-widest focus:outline-none focus:border-silver-600 transition-all duration-500 text-white rounded-lg"
-              />
-              <button className={`absolute ${isAr ? 'left-1' : 'right-1'} top-1 bottom-1 bg-silver-600 hover:bg-silver-500 text-black px-5 rounded-md transition-all flex items-center justify-center`}>
-                <FiSend className={isAr ? 'rotate-180' : ''} />
-              </button>
+              <div className="flex items-center gap-3">
+                <Mail className="w-4 h-4 text-silver-400 shrink-0" />
+                <a
+                  href="mailto:Elitesilverjo@gmail.com"
+                  className="font-mono text-silver-300 hover:text-white transition-colors text-xs"
+                >
+                  Elitesilverjo@gmail.com
+                </a>
+              </div>
             </div>
           </div>
-
         </div>
 
-        {/* Bottom Metadata */}
-        <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="text-[10px] tracking-[0.2em] uppercase text-gray-600">
-            © {currentYear} <span className="text-gray-400">{t('brandName')}</span>. {t('copyright') || "All Rights Reserved."}
+        {/* 3. الشريط السفلي (حقوق النشر، طرق الدفع، وزر الصعود لأعلى) */}
+        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+          {/* حقوق النشر */}
+          <div className="text-[11px] tracking-wider uppercase text-silver-500 text-center md:text-start">
+            © {currentYear} <span className="text-white font-bold">{t('brandName')}</span>.{' '}
+            {t('copyright') || (isRTL ? 'جميع الحقوق محفوظة.' : 'All Rights Reserved.')}
           </div>
 
-          <div className="flex items-center gap-8 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-700">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Visa_Inc._logo_%281992%E2%80%931999%29.svg/250px-Visa_Inc._logo_%281992%E2%80%931999%29.svg.png" className="h-3" alt="Visa" />
-            <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" className="h-5" alt="Mastercard" />
-            <div className="h-4 w-[1px] bg-white/10 hidden md:block" />
-            <span className="text-[9px] tracking-widest text-gray-500 uppercase">Secure Payments</span>
+          {/* بوابات الدفع والأمان المعتمدة */}
+          <div className="flex items-center gap-5 text-silver-400 text-xs">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[11px] font-mono text-silver-300">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span>{isRTL ? 'دفع آمن ومشفّر 256-Bit' : '256-Bit Secure SSL'}</span>
+            </div>
+
+            <div className="flex items-center gap-2 text-silver-400 text-xs font-mono">
+              <span>CliQ</span>
+              <span>•</span>
+              <span>Visa</span>
+              <span>•</span>
+              <span>Mastercard</span>
+              <span>•</span>
+              <span>{isRTL ? 'دفع عند الاستلام' : 'COD'}</span>
+            </div>
           </div>
+
+          {/* زر الصعود لأعلى الصفحة */}
+          <button
+            onClick={scrollToTop}
+            aria-label="Scroll to top"
+            className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-silver-300 hover:text-white transition-all duration-300 cursor-pointer shadow-md active:scale-95"
+            title={isRTL ? 'العودة لأعلى الصفحة' : 'Back to top'}
+          >
+            <ArrowUp className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </footer>
   );
 }
 
-/* --- Internal Components for Cleanliness --- */
-
-function FooterLink({ href, children }) {
-  const { language } = useLanguage();
-  const isAr = language === 'ar';
+/* مكون الرابط الداخلي للفوتر */
+function FooterLink({ to, children }) {
+  const { isRTL } = useLanguage();
 
   return (
     <li>
-      <a
-        href={href}
-        className="group flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.15em] text-gray-500 hover:text-silver-500 transition-all duration-300"
+      <Link
+        to={to}
+        className="group flex items-center gap-2 text-xs font-medium tracking-wider text-silver-400 hover:text-white transition-colors duration-300"
       >
         <span className="relative overflow-hidden">
           {children}
-          <span className="absolute bottom-0 left-0 w-full h-[1px] bg-silver-600 -translate-x-[110%] group-hover:translate-x-0 transition-transform duration-500"></span>
+          <span className="absolute bottom-0 left-0 w-full h-[1px] bg-silver-400 -translate-x-[110%] group-hover:translate-x-0 transition-transform duration-300" />
         </span>
-        <FiChevronRight className={`text-[10px] opacity-0 group-hover:opacity-100 transition-all ${isAr ? 'rotate-180' : ''} transform group-hover:translate-x-1`} />
-      </a>
+        <span className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1">
+          {isRTL ? <ChevronLeft className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        </span>
+      </Link>
     </li>
   );
 }
 
-// تأكد أنك كتبت كلمة links هنا بين الأقواس
-function ContactItem({ icon, title, links }) { 
-  return (
-    <li className="group flex items-start gap-4">
-      <div className="w-10 h-10 shrink-0 rounded-full border border-white/5 flex items-center justify-center text-silver-500 group-hover:bg-silver-600 group-hover:text-black transition-all duration-500 text-base">
-        {icon}
-      </div>
-      <div className="flex flex-col space-y-1.5">
-        <span className="text-[9px] uppercase tracking-widest text-gray-600 mb-0.5">{title}</span>
-        
-        {links && links.map((link, index) => (
-          <span 
-            key={index} 
-            className="text-[11px] text-gray-400 group-hover:text-white transition-colors block leading-tight font-light"
-          >
-            {link}
-          </span>
-        ))}
-      </div>
-    </li>
-  );
-}
-
+/* مكون الرابط الاجتماعي */
 function SocialLink({ href, icon, label }) {
   return (
     <a
       href={href}
+      target="_blank"
+      rel="noopener noreferrer"
       aria-label={label}
-      className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-gray-400 hover:border-silver-500 hover:text-silver-500 transition-all duration-500 hover:-translate-y-1 bg-white/[0.02]"
+      className="w-10 h-10 rounded-full border border-white/10 bg-white/[0.03] hover:bg-white/15 flex items-center justify-center text-silver-300 hover:text-white hover:border-silver-400/50 transition-all duration-300 hover:-translate-y-1 shadow-sm"
     >
       {icon}
     </a>

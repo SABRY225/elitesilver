@@ -159,10 +159,14 @@ export default {
         'gem-twinkle': 'gem-twinkle 3s ease-in-out infinite',
       },
       fontFamily: {
-        sans: ['Cairo', 'Inter', 'sans-serif'],
-        "cairo": ["Cairo", "sans-serif"], // ممتاز للنصوص العربية المتوازنة
-        "luxury": ["Playfair Display", "serif"], // ممتاز للعناوين اللاتينية الفخمة
-        "modern": ["Inter", "sans-serif"],
+              sans: ['Tajawal', 'Alexandria', 'sans-serif'],
+        cairo: ['Amiri', 'Playfair Display', 'serif'],
+        amiri: ['Amiri', 'Playfair Display', 'serif'],
+        luxury: ['Amiri', 'Cinzel', 'serif'],
+        tajawal: ['Tajawal', 'sans-serif'],
+        alexandria: ['Alexandria', 'sans-serif'],
+        amiri: ['Amiri', 'serif'],
+        cinzel: ['Cinzel', 'serif'],
       },
       backgroundImage: {
         // تأثيرات تدرج تحاكي المعدن (تم تحسين الألوان)

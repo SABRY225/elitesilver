@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { FiStar, FiMessageCircle, FiPackage, FiUser, FiCalendar, FiActivity, FiTrash2 } from 'react-icons/fi';
+import { 
+  Star, 
+  MessageSquare, 
+  Package, 
+  User, 
+  Calendar, 
+  Trash2, 
+  RefreshCw,
+  ShieldCheck,
+  Gem
+} from 'lucide-react';
 
 function ReviewsPage() {
   const [reviews, setReviews] = useState([]);
@@ -12,14 +22,12 @@ function ReviewsPage() {
     setLoading(true);
     try {
       const base = import.meta.env.VITE_API_URL;
-      // نفترض أن الـ API يعيد التقييمات مع عمل Populate للمنتج والمستخدم
       const response = await axios.get(`${base}/reviews/admin`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setReviews(response.data);
+      setReviews(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       toast.error('فشل في تحميل مراجعات العملاء');
-      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -30,130 +38,163 @@ function ReviewsPage() {
   }, []);
 
   const handleDeleteReview = async (id) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذا التقييم؟')) return;
+    if (!window.confirm('هل أنت متأكد من حذف هذا التقييم نهائياً؟')) return;
+    const toastId = toast.loading('جاري حذف التقييم...');
     try {
       await axios.delete(`${import.meta.env.VITE_API_URL}/reviews/admin/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success('تم حذف التقييم');
+      toast.success('تم حذف التقييم بنجاح', { id: toastId });
       fetchReviews();
     } catch (error) {
-      toast.error('فشل حذف التقييم');
+      toast.error('فشل حذف التقييم', { id: toastId });
     }
   };
 
-  // دالة لرسم النجوم بناءً على الرقم
   const renderStars = (rating) => {
     return (
       <div className="flex gap-0.5 text-amber-400">
         {[...Array(5)].map((_, i) => (
-          <FiStar key={i} size={14} fill={i < rating ? "currentColor" : "none"} />
+          <Star 
+            key={i} 
+            className="w-3.5 h-3.5" 
+            fill={i < Number(rating || 0) ? "currentColor" : "none"} 
+          />
         ))}
       </div>
     );
   };
 
-  if (loading) return (
-    <div className="flex flex-col items-center justify-center p-20 space-y-4">
-      <FiActivity className="animate-spin text-4xl text-rose-500" />
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">تحليل آراء العملاء...</p>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[360px] gap-3">
+        <div className="w-10 h-10 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+        <span className="text-slate-500 text-xs font-mono tracking-widest uppercase">جاري تحليل آراء ومراجعات العملاء...</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 md:p-8 font-['Tajawal'] text-right space-y-8" dir="rtl">
+    <div className="space-y-6" dir="rtl">
       
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-slate-900 rounded-lg text-white shadow-lg">
-              <FiMessageCircle size={24} />
-            </div>
-            <h3 className="text-3xl font-black text-slate-900 tracking-tight">مراجعات العملاء</h3>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 rounded-2xl bg-white border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800">
+            <MessageSquare className="w-5 h-5 text-slate-800" />
           </div>
-          <p className="text-sm text-slate-400 font-medium">مراقبة الجودة وآراء المشترين حول المنتجات</p>
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 tracking-wide">مراجعات وتقييمات العملاء</h2>
+            <p className="text-slate-500 text-xs mt-0.5">
+              مراقبة جودة المنتجات، رضى المشترين، والآراء الموثقة
+            </p>
+          </div>
         </div>
-        
-        <div className="bg-white px-6 py-3 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-           <span className="text-sm font-bold text-slate-500">إجمالي المراجعات:</span>
-           <span className="text-xl font-black text-rose-500">{reviews.length}</span>
+
+        <div className="flex items-center gap-3">
+          <div className="px-3.5 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs">
+            <span className="text-slate-500 font-bold">إجمالي المراجعات: </span>
+            <span className="text-slate-900 font-mono font-bold">{reviews.length}</span>
+          </div>
+
+          <button
+            onClick={fetchReviews}
+            className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 transition-all active:scale-95"
+            title="تحديث المراجعات"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
+      {/* Grid of Reviews */}
       {reviews.length === 0 ? (
-        <div className="bg-white rounded-[3rem] p-20 text-center border border-dashed border-slate-200">
-          <p className="text-slate-400 font-bold ">لا توجد تقييمات مسجلة حتى الآن</p>
+        <div className="text-center py-20 bg-white rounded-3xl border border-slate-200 shadow-sm">
+          <MessageSquare className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+          <p className="text-slate-500 text-sm">لا توجد تقييمات مسجلة حتى الآن</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {reviews.map((rev) => (
-            <div key={rev.id || rev._id} className="bg-white rounded-[2.5rem] border border-slate-100 p-6 hover:shadow-2xl hover:border-rose-100 transition-all duration-500 group relative overflow-hidden">
-              
-              <div className="flex flex-col md:flex-row gap-6">
-                {/* Product Section */}
-                <div className="w-full md:w-32 h-32 bg-slate-50 rounded-3xl overflow-hidden flex-shrink-0 relative group-hover:scale-105 transition-transform duration-500">
-                  <img 
-                    src={`${import.meta.env.VITE_URL}/${rev.product?.image}`} 
-                    alt="product" 
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div 
+              key={rev.id || rev._id} 
+              className="bg-white rounded-2xl border border-slate-200 p-5 hover:border-slate-300 transition-all duration-300 shadow-sm flex flex-col justify-between space-y-4"
+            >
+              <div className="flex gap-4">
+                
+                {/* Product thumbnail */}
+                <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 flex-shrink-0">
+                  {rev.product?.image ? (
+                    <img 
+                      src={`${import.meta.env.VITE_URL}/${rev.product?.image}`} 
+                      alt="product" 
+                      className="w-full h-full object-cover"
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-400">
+                      <Gem className="w-6 h-6" />
+                    </div>
+                  )}
                 </div>
 
-                {/* Review Details */}
-                <div className="flex-1 space-y-4">
-                  <div className="flex justify-between items-start">
+                {/* Review info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-start gap-2 mb-1.5">
                     <div>
-                      <h4 className="font-black text-slate-800 text-lg group-hover:text-rose-500 transition-colors">
-                        {rev.product?.name || 'منتج غير معروف'}
+                      <h4 className="font-bold text-slate-900 text-xs truncate">
+                        {rev.product?.name || 'قطعة مجوهرات'}
                       </h4>
-                      <div className="mt-1 flex items-center gap-3">
+                      <div className="flex items-center gap-2 mt-1">
                         {renderStars(rev.rating)}
-                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-tighter">
-                          Rating: {rev.rating}/5
+                        <span className="text-[10px] font-mono text-slate-500 font-bold">
+                          {rev.rating}/5
                         </span>
                       </div>
                     </div>
+
                     <button 
                       onClick={() => handleDeleteReview(rev.id || rev._id)}
-                      className="p-2.5 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all shadow-sm"
+                      className="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 border border-slate-200 transition-all"
+                      title="حذف التقييم"
                     >
-                      <FiTrash2 size={16} />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
-                  <p className="text-slate-600 text-sm leading-relaxed font-medium bg-slate-50/50 p-4 rounded-2xl border border-slate-50">
-                    "{rev.comment || 'لا يوجد تعليق مكتوب'}"
+                  <p className="text-slate-700 text-xs leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-200 mt-2">
+                    "{rev.comment || 'تقييم ممتاز بدون تعليق نصي'}"
                   </p>
-
-                  {/* Footer Info */}
-                  <div className="flex flex-wrap items-center gap-y-2 gap-x-6 pt-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center">
-                        <FiUser size={12} className="text-slate-500" />
-                      </div>
-                      <span className="text-xs font-bold text-slate-500">{rev.user?.name || rev.user?.fullName || 'عميل مجهول'}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <FiCalendar size={14} className="text-slate-300" />
-                      <span className="text-[10px] font-bold text-slate-400">
-                        {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString('ar-EG') : '-'}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 mr-auto">
-                       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Verified Purchase</span>
-                    </div>
-                  </div>
                 </div>
               </div>
+
+              {/* Review footer */}
+              <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500">
+                <div className="flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="font-bold text-slate-800">
+                    {rev.user?.name || rev.user?.fullName || 'عميل موثق'}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5 font-mono">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                  <span>
+                    {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString('ar-EG') : '—'}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1 text-emerald-600">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span className="text-[10px] font-bold">مشتري معتمد</span>
+                </div>
+              </div>
+
             </div>
           ))}
         </div>
       )}
+
     </div>
   );
 }

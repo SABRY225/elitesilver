@@ -1,13 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { FiShield, FiTruck, FiPhone, FiUser, FiMapPin, FiPlus, FiMinus, FiCreditCard, FiCheckCircle } from 'react-icons/fi';
-import { GiCoins, GiGoldBar, GiWeight } from 'react-icons/gi';
-import { BsLayersHalf } from 'react-icons/bs';
-import Navbar from './Navbar';
-import Footer from './Footer';
-import toast, { Toaster } from 'react-hot-toast';
-import { useLanguage } from '../contexts/LanguageContext';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate, Link } from "react-router-dom";
+import {
+  ShieldCheck,
+  Truck,
+  Phone,
+  User,
+  MapPin,
+  Plus,
+  Minus,
+  CreditCard,
+  CheckCircle2,
+  Coins,
+  Sparkles,
+  ArrowRight,
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Award,
+} from "lucide-react";
+import Navbar from "./Navbar";
+import Footer from "./Footer";
+import toast from "react-hot-toast";
+import { useLanguage } from "../contexts/LanguageContext";
+import axios from "axios";
 
 const SilverCheckout = () => {
   const { state } = useLocation();
@@ -17,286 +32,508 @@ const SilverCheckout = () => {
   const [cities, setCities] = useState([]);
   const [selectedCity, setSelectedCity] = useState(null);
   const [quantity, setQuantity] = useState(1);
-  const [user, setUser] = useState({ id: null, fullName: '' });
-  
+  const [user, setUser] = useState({ id: null, fullName: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [formData, setFormData] = useState({
-    fullName: '',
-    phone: '',
-    secondaryPhone: '',
-    cityId: '',
-    address: '',
-    paymentMethod: 'cod' 
+    fullName: "",
+    phone: "",
+    secondaryPhone: "",
+    cityId: "",
+    address: "",
+    paymentMethod: "cod",
   });
 
   useEffect(() => {
-    const savedUser = JSON.parse(localStorage.getItem('user'));
-    if (savedUser) {
-      setUser({ id: savedUser.id, fullName: savedUser.name});
-      setFormData(prev => ({ ...prev, fullName: savedUser.name ,phone:savedUser.phone.slice(4),address:savedUser.address }));
+    try {
+      const savedUser = JSON.parse(localStorage.getItem("user") || "null");
+      if (savedUser) {
+        setUser({ id: savedUser.id, fullName: savedUser.name });
+        setFormData((prev) => ({
+          ...prev,
+          fullName: savedUser.name || "",
+          phone: savedUser.phone ? savedUser.phone.replace("+962", "") : "",
+          address: savedUser.address || "",
+        }));
+      }
+    } catch (e) {
+      console.error(e);
     }
 
     const fetchCities = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/city/shipping-cities`);
-         
-        const data = await response.json();
-        setCities(data);
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL}/city/shipping-cities`
+        );
+        if (Array.isArray(response.data)) {
+          setCities(response.data);
+          if (response.data.length > 0) {
+            setSelectedCity(response.data[0]);
+            setFormData((prev) => ({ ...prev, cityId: response.data[0].id }));
+          }
+        }
       } catch (error) {
         console.error("Error fetching cities", error);
       }
     };
     fetchCities();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  if (!state) return <div className="flex items-center justify-center min-h-screen text-2xl font-bold text-slate-400">{t('productNotFound')}</div>;
+  if (!state) {
+    return (
+      <div
+        className="min-h-screen bg-[#070709] text-white flex flex-col justify-between"
+        dir={isRTL ? "rtl" : "ltr"}
+      >
+        <Navbar />
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+          <Coins className="w-16 h-16 text-silver-400 mb-4" />
+          <h2 className="text-2xl font-bold mb-4">
+            {t("productNotFound") || (isRTL ? "لم يتم تحديد سبيكة للطلب" : "No bullion selected")}
+          </h2>
+          <Link
+            to="/#investment-section"
+            className="silver-btn-luxury px-8 py-3 rounded-full text-black font-bold text-xs uppercase"
+          >
+            {isRTL ? "العودة لبورصة الفضة" : "Back to Bullion Rates"}
+          </Link>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
-  const productPrice = state.price || 0;
-  const deliveryFee = selectedCity ? (parseFloat(selectedCity.price) || 0) : 0;
-  const totalAmount = (productPrice * quantity) + deliveryFee;
+  const productPrice = parseFloat(state.price) || 0;
+  const deliveryFee = selectedCity ? parseFloat(selectedCity.price) || 0 : 0;
+  const totalAmount = productPrice * quantity + deliveryFee;
 
   const handleCityChange = (e) => {
     const cityId = e.target.value;
-    const city = cities.find(c => c.id === parseInt(cityId));
+    const city = cities.find((c) => c.id === parseInt(cityId));
     setSelectedCity(city);
-    setFormData({ ...formData, cityId: cityId });
+    setFormData((prev) => ({ ...prev, cityId }));
   };
 
-  const handleSubmit = async(e) => {
+  const handlePhoneChange = (name, val) => {
+    const nums = val.replace(/\D/g, "");
+    if (nums.length <= 9) {
+      setFormData((prev) => ({ ...prev, [name]: nums }));
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.phone.length < 9) {
-      return toast.error(isRTL ? 'يرجى إدخال رقم هاتف صحيح (9 أرقام)' : 'Please enter a valid 9-digit phone number');
+    if (!formData.fullName || !formData.address || !formData.cityId) {
+      toast.error(t("fillAllFields") || (isRTL ? "يرجى ملء كافة الحقول المطلوبة" : "Please fill all required fields"));
+      return;
     }
 
-    const loadingToast = toast.loading(t('processingOrder'));
+    if (formData.phone.length < 9) {
+      toast.error(
+        isRTL
+          ? "يرجى إدخال رقم هاتف صحيح مكون من 9 أرقام"
+          : "Please enter a valid 9-digit phone number"
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
+    const loadingToast = toast.loading(
+      t("processingOrder") || (isRTL ? "جاري تنفيذ طلب السبيكة..." : "Processing bullion order...")
+    );
+
     try {
       const finalData = {
         ...formData,
         phone: `+962${formData.phone}`,
-        secondaryPhone: formData.secondaryPhone ? `+962${formData.secondaryPhone}` : '',
+        secondaryPhone: formData.secondaryPhone
+          ? `+962${formData.secondaryPhone}`
+          : "",
         userId: user.id,
         quantity: quantity,
         total_price: totalAmount,
         productName: state.name,
         productPrice: state.price,
       };
-    
+
       await axios.post(`${import.meta.env.VITE_API_URL}/orders/silver`, finalData);
       toast.dismiss(loadingToast);
-      toast.success(t('orderSuccess'));
-      navigate('/order-success');
+      toast.success(
+        t("orderSuccess") || (isRTL ? "تم تسجيل طلب السبيكة بنجاح!" : "Bullion order placed successfully!")
+      );
+      navigate("/order-success");
     } catch (error) {
       toast.dismiss(loadingToast);
-      toast.error(t('orderError'));
-    }
-  };
-
-  const getIcon = (id) => {
-    const iconClass = "text-slate-400 w-12 h-12 p-2 bg-slate-100 rounded-xl";
-    switch (id) {
-      case 'uae_kilo':
-      case 'swiss_kilo': return <GiGoldBar className={iconClass} />;
-      case 'ounce_31': return <GiWeight className={iconClass} />;
-      case 'ounce_100': return <BsLayersHalf className={iconClass} />;
-      case 'lira_5': return <GiCoins className="text-yellow-600 w-12 h-12 p-2 bg-yellow-50 rounded-xl" />;
-      default: return <GiGoldBar className={iconClass} />;
+      toast.error(
+        t("orderError") || (isRTL ? "فشل تقديم الطلب، يرجى المحاولة لاحقاً" : "Failed to place order")
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen  bg-[#111111]" dir={isRTL ? 'rtl' : 'ltr'} style={{ fontFamily: isRTL ? 'Cairo, sans-serif' : 'Inter, sans-serif' }}>
-      <Toaster position="top-center" />
+    <div
+      className="min-h-screen bg-[#070709] text-white select-none flex flex-col justify-between"
+      dir={isRTL ? "rtl" : "ltr"}
+    >
       <Navbar />
-      
-      <main className="max-w-7xl mx-auto pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-12 gap-12 items-start">
-          
-          {/* Form Side (Col 7) */}
-          <div className="lg:col-span-7 space-y-8 mt-20">
-            <header>
-              <h1 className="text-3xl font-black mb-2  text-[#fff]">{t('shippingInfo')}</h1>
-              <p className=" text-[#fff]/50">{t('completeDetailsToFinishOrder')}</p>
+
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 pt-36 sm:pt-44 pb-24 max-w-6xl flex-1">
+        {/* زر العودة */}
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-silver-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider mb-8 cursor-pointer"
+        >
+          {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          <span>{isRTL ? "العودة إلى بورصة الفضة" : "Back to Bullion Market"}</span>
+        </button>
+
+        <form
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start"
+        >
+          {/* الجانب الأيمن / الأيسر: بيانات التوصيل والدفع */}
+          <div className="lg:col-span-7 space-y-10">
+            <header className="mb-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 font-mono mb-3">
+                <Coins className="w-3.5 h-3.5" />
+                <span>Ag 999.0 Fine Silver</span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                {isRTL ? "تأكيد طلب سبائك الفضة" : "Bullion Order Checkout"}
+              </h1>
+              <p className="text-silver-400 text-xs sm:text-sm mt-1.5 font-light">
+                {t("completeDetailsToFinishOrder") ||
+                  (isRTL
+                    ? "أكمل تفاصيل التوصيل لاستلام سبائكك المعتمدة مع شهادات النقاء."
+                    : "Complete delivery details to receive your certified silver bullion.")}
+              </p>
             </header>
 
-            <form onSubmit={handleSubmit} className="bg-white rounded-[2rem] p-8 shadow-xl shadow-slate-200/50 border border-slate-100 space-y-6">
+            <section className="bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-6 sm:p-8 rounded-3xl border border-white/10 shadow-xl space-y-6">
               {user.id && (
-                <div className="flex items-center gap-3 bg-emerald-50 text-emerald-700 p-4 rounded-2xl border border-emerald-100">
-                  <FiShield className="animate-pulse" />
-                  <span className="font-semibold text-sm">{t('welcome')}, {user.fullName}</span>
+                <div className="flex items-center gap-3 bg-emerald-500/10 text-emerald-300 p-4 rounded-2xl border border-emerald-500/20 text-xs font-bold">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>
+                    {t("welcome")}, {user.fullName}
+                  </span>
                 </div>
               )}
 
               <div className="space-y-4">
-                {/* Full Name */}
-                <div className="group">
-                  <label className="block text-sm font-bold text-slate-700 mb-2 px-1">{t('fullName')}</label>
-                  <div className="relative flex items-center">
-                    {/* <FiUser className="absolute mx-4 text-slate-400 group-focus-within:text-slate-900 transition-colors" /> */}
-                    <input 
+                {/* الاسم الكامل */}
+                <div>
+                  <label className="block text-xs font-bold text-silver-300 mb-2">
+                    {t("fullName")} *
+                  </label>
+                  <div className="relative">
+                    <User
+                      className={`absolute top-1/2 -translate-y-1/2 ${
+                        isRTL ? "right-3.5" : "left-3.5"
+                      } text-silver-400 w-4 h-4`}
+                    />
+                    <input
                       required
-                      className="w-full py-4 pr-4 pl-12 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all" 
-                      type="text" 
+                      type="text"
                       value={formData.fullName}
-                      onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                      onChange={(e) =>
+                        setFormData({ ...formData, fullName: e.target.value })
+                      }
+                      placeholder={isRTL ? "الاسم الكامل للمشتري" : "Buyer's Full Name"}
+                      className={`w-full ${
+                        isRTL ? "pr-11 pl-4" : "pl-11 pr-4"
+                      } py-3.5 bg-black/60 border border-white/15 rounded-xl text-xs text-white placeholder-gray-500 focus:border-silver-400 focus:outline-none transition-colors`}
                     />
                   </div>
                 </div>
 
-                {/* Phones */}
-                <div className="grid md:grid-cols-2 gap-4">
-                  {[
-                    { id: 'phone', label: t('phone'), required: true },
-                    { id: 'secondaryPhone', label: t('secondaryPhone'), required: false }
-                  ].map((field) => (
-                    <div key={field.id}>
-                      <label className="block text-sm font-bold text-slate-700 mb-2 px-1">{field.label}</label>
-                      <div className="flex h-[58px] group" dir="ltr">
-                        <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 border-r-0 rounded-l-2xl px-4 text-slate-600 font-bold text-sm">
-                          <img src="https://flagcdn.com/w20/jo.png" alt="JO" className="w-5 rounded-sm" />
-                          <span>+962</span>
-                        </div>
-                        <input 
-                          required={field.required}
-                          className="flex-1 p-4 bg-slate-50 border border-slate-200 rounded-r-2xl outline-none group-focus-within:border-slate-900 group-focus-within:bg-white transition-all font-mono" 
-                          type="tel" 
-                          maxLength="9"
-                          placeholder="7XXXXXXXX"
-                          value={formData[field.id]}
-                          onChange={(e) => setFormData({...formData, [field.id]: e.target.value.replace(/\D/g, '')})}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Location */}
+                {/* أرقام الهواتف */}
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2 px-1">{t('city')}</label>
-                    <div className="relative flex items-center">
-                      {/* <FiMapPin className="absolute mx-4 text-slate-400" /> */}
-                      <select 
+                    <label className="block text-xs font-bold text-silver-300 mb-2">
+                      {t("phone")} *
+                    </label>
+                    <div className="flex items-center" dir="ltr">
+                      <span className="bg-white/5 border border-r-0 border-white/15 px-3 py-3.5 rounded-l-xl text-silver-300 font-mono text-xs">
+                        +962
+                      </span>
+                      <input
                         required
-                        className="w-full py-4 pr-10 pl-12 bg-slate-50 border border-slate-200 rounded-2xl appearance-none focus:bg-white focus:border-slate-900 outline-none transition-all cursor-pointer"
+                        type="tel"
+                        maxLength="9"
+                        placeholder="7XXXXXXXX"
+                        value={formData.phone}
+                        onChange={(e) =>
+                          handlePhoneChange("phone", e.target.value)
+                        }
+                        className="flex-1 px-4 py-3.5 bg-black/60 border border-white/15 rounded-r-xl text-xs font-mono text-white focus:border-silver-400 focus:outline-none transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-silver-300 mb-2">
+                      {t("secondaryPhone") || (isRTL ? "هاتف بديل (اختياري)" : "Alternate Phone")}
+                    </label>
+                    <div className="flex items-center" dir="ltr">
+                      <span className="bg-white/5 border border-r-0 border-white/15 px-3 py-3.5 rounded-l-xl text-silver-300 font-mono text-xs">
+                        +962
+                      </span>
+                      <input
+                        type="tel"
+                        maxLength="9"
+                        placeholder="7XXXXXXXX"
+                        value={formData.secondaryPhone}
+                        onChange={(e) =>
+                          handlePhoneChange("secondaryPhone", e.target.value)
+                        }
+                        className="flex-1 px-4 py-3.5 bg-black/60 border border-white/15 rounded-r-xl text-xs font-mono text-white focus:border-silver-400 focus:outline-none transition-colors"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* المدينة والعنوان */}
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-silver-300 mb-2">
+                      {t("city")} *
+                    </label>
+                    <div className="relative">
+                      <MapPin
+                        className={`absolute top-1/2 -translate-y-1/2 ${
+                          isRTL ? "right-3.5" : "left-3.5"
+                        } text-silver-400 w-4 h-4 pointer-events-none`}
+                      />
+                      <select
+                        required
+                        value={formData.cityId}
                         onChange={handleCityChange}
+                        className={`w-full ${
+                          isRTL ? "pr-11 pl-4" : "pl-11 pr-4"
+                        } py-3.5 bg-black/60 border border-white/15 rounded-xl text-xs text-white focus:border-silver-400 focus:outline-none transition-colors cursor-pointer`}
                       >
-                        <option value="">{t('selectCity')}...</option>
-                        {cities.map(city => <option key={city.id} value={city.id}>{city.name}</option>)}
+                        <option value="" className="bg-[#0e0e13]">
+                          {t("selectCity")}...
+                        </option>
+                        {cities.map((city) => (
+                          <option key={city.id} value={city.id} className="bg-[#0e0e13]">
+                            {city.name} {city.price > 0 ? `(${city.price} JOD)` : `(${isRTL ? "مجاني" : "Free"})`}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>
+
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2 px-1">{t('address')}</label>
-                    <input 
+                    <label className="block text-xs font-bold text-silver-300 mb-2">
+                      {t("address")} *
+                    </label>
+                    <input
                       required
-                      className="w-full py-4 px-6 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-slate-900 outline-none transition-all" 
-                      placeholder={t('detailedAddress')}
+                      type="text"
+                      placeholder={t("detailedAddress") || (isRTL ? "الشارع، البناية..." : "Street, Building...")}
                       value={formData.address}
-                      onChange={(e) => setFormData({...formData, address: e.target.value})}
+                      onChange={(e) =>
+                        setFormData({ ...formData, address: e.target.value })
+                      }
+                      className="w-full px-4 py-3.5 bg-black/60 border border-white/15 rounded-xl text-xs text-white placeholder-gray-500 focus:border-silver-400 focus:outline-none transition-colors"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Payment Methods */}
-              <div className="pt-6 border-t border-slate-100">
-                <label className="text-sm font-bold text-slate-700 block mb-4 uppercase tracking-wider">{t('paymentMethod')}</label>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {/* COD */}
-                  <label className={`relative flex items-center p-5 rounded-2xl border-2 cursor-pointer transition-all hover:bg-slate-50 ${formData.paymentMethod === 'cod' ? 'border-slate-900 bg-slate-50 ring-4 ring-slate-900/5' : 'border-slate-100'}`}>
-                    <input 
-                      type="radio" name="payment" className="hidden"
-                      checked={formData.paymentMethod === 'cod'}
-                      onChange={() => setFormData({...formData, paymentMethod: 'cod'})}
-                    />
-                    <div className="flex items-center gap-4 w-full">
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${formData.paymentMethod === 'cod' ? 'border-slate-900' : 'border-slate-300'}`}>
-                        {formData.paymentMethod === 'cod' && <div className="w-3 h-3 bg-slate-900 rounded-full" />}
+              {/* طرق الدفع */}
+              <div className="pt-6 border-t border-white/10">
+                <label className="block text-xs font-bold uppercase tracking-wider text-silver-300 mb-4">
+                  {t("paymentMethod")}
+                </label>
+                <div className="grid sm:grid-cols-2 gap-3.5">
+                  <div
+                    onClick={() =>
+                      setFormData({ ...formData, paymentMethod: "cod" })
+                    }
+                    className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${
+                      formData.paymentMethod === "cod"
+                        ? "border-white bg-white/10 shadow-lg"
+                        : "border-white/10 bg-black/40 hover:border-white/20"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Truck className="w-5 h-5 text-silver-300" />
+                      <div>
+                        <div className="text-xs font-bold text-white">
+                          {t("cashOnDelivery")}
+                        </div>
+                        <div className="text-[10px] text-silver-400">
+                          {t("payWhenReceive")}
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="font-bold text-slate-900">{t('cashOnDelivery')}</p>
-                        <p className="text-xs text-slate-500">{t('payWhenReceive')}</p>
-                      </div>
-                      <FiTruck className={`text-2xl ${formData.paymentMethod === 'cod' ? 'text-slate-900' : 'text-slate-300'}`} />
                     </div>
-                  </label>
+                    {formData.paymentMethod === "cod" && (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    )}
+                  </div>
 
-                  {/* Disabled Credit Card */}
-                  <div className="relative flex items-center p-5 rounded-2xl border-2 border-slate-100 opacity-60 bg-slate-50/50 cursor-not-allowed overflow-hidden">
-                    <div className="flex items-center gap-4 w-full">
-                      <div className="w-6 h-6 rounded-full border-2 border-slate-200" />
-                      <div className="flex-1">
-                        <p className="font-bold text-slate-400">{t('creditCard')}</p>
-                        <span className="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-bold">{t('comingSoon')}</span>
+                  <div
+                    onClick={() =>
+                      toast(
+                        isRTL
+                          ? "الدفع بالبطاقات متاح قريباً"
+                          : "Card payment coming soon",
+                        { icon: "⏳" }
+                      )
+                    }
+                    className="p-4 rounded-2xl border border-white/5 bg-white/[0.02] opacity-50 cursor-not-allowed flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <CreditCard className="w-5 h-5 text-gray-500" />
+                      <div>
+                        <div className="text-xs font-bold text-gray-400">
+                          {t("creditCard")}
+                        </div>
+                        <div className="text-[10px] text-gray-600 font-mono">
+                          {t("comingSoon")}
+                        </div>
                       </div>
-                      <FiCreditCard className="text-2xl text-slate-300" />
                     </div>
                   </div>
                 </div>
               </div>
-            </form>
+            </section>
           </div>
 
-          {/* Sticky Summary Side (Col 5) */}
-          <div className="lg:col-span-5 lg:sticky lg:top-32 space-y-6  mt-20">
-            <div className="bg-slate-900 rounded-[2rem] p-8 text-white shadow-2xl shadow-slate-900/20 overflow-hidden relative">
-               {/* Decorative Circle */}
-              <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
-              
-              <h3 className="text-xl font-bold mb-8 flex items-center gap-2">
-                <FiCheckCircle className="text-emerald-400" /> {t('orderSummary')}
+          {/* الجانب الأيمن / الأيسر: ملخص السبيكة وتأكيد الشراء */}
+          <aside className="lg:col-span-5 sticky top-32 space-y-6">
+            <div className="bg-gradient-to-b from-white/[0.08] to-white/[0.02] rounded-3xl p-6 sm:p-8 border border-white/10 backdrop-blur-xl shadow-2xl">
+              <h3 className="text-xl font-bold text-white mb-6 pb-4 border-b border-white/10 flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                <span>{t("orderSummary")}</span>
               </h3>
 
-              <div className="flex items-center gap-5 mb-8 bg-white/5 p-4 rounded-2xl border border-white/10">
-                {getIcon(state.id)}
-                <div className="flex-1">
-                  <h4 className="font-bold text-lg leading-tight">{state.name}</h4>
-                  <p className="text-slate-400 text-sm mt-1">{productPrice.toLocaleString()} {t('currency')}</p>
+              {/* بطاقة السبيكة المطلوبة */}
+              <div className="p-4 rounded-2xl bg-black/50 border border-white/10 mb-6 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="w-14 h-14 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-silver-200 shrink-0">
+                    <Coins className="w-7 h-7" />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-sm font-bold text-white truncate">
+                      {state.name}
+                    </h4>
+                    <p className="text-xs font-mono text-silver-300 mt-0.5">
+                      {productPrice.toLocaleString()}{" "}
+                      <span className="text-[10px] text-silver-400 uppercase">
+                        {t("currency")}
+                      </span>
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 bg-white/10 px-3 py-2 rounded-xl border border-white/10">
-                  <button type="button" onClick={() => setQuantity(prev => Math.max(1, prev - 1))} className="hover:text-emerald-400 transition-colors"><FiMinus /></button>
-                  <span className="font-black min-w-[20px] text-center">{quantity}</span>
-                  <button type="button" onClick={() => setQuantity(prev => prev + 1)} className="hover:text-emerald-400 transition-colors"><FiPlus /></button>
+
+                {/* أزرار زيادة ونقصان الكمية */}
+                <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-2 py-1.5 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                    className="w-6 h-6 flex items-center justify-center text-silver-300 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <Minus className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="font-mono font-bold text-white text-xs min-w-[16px] text-center">
+                    {quantity}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((prev) => prev + 1)}
+                    className="w-6 h-6 flex items-center justify-center text-silver-300 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
 
-              <div className="space-y-4 border-t border-white/10 pt-6">
-                <div className="flex justify-between text-slate-400">
-                  <span>{t('subtotal')}</span>
-                  <span className="text-white font-medium">{(productPrice * quantity).toLocaleString()} {t('currency')}</span>
-                </div>
-                <div className="flex justify-between text-slate-400">
-                  <span>{t('shipping')}</span>
-                  <span className={deliveryFee > 0 ? "text-emerald-400 font-bold" : "text-slate-500"}>
-                    {deliveryFee > 0 ? `+ ${deliveryFee} ${t('currency')}` : t('free')}
+              {/* الحسابات */}
+              <div className="space-y-3.5 mb-6 text-xs border-t border-white/10 pt-4">
+                <div className="flex justify-between text-silver-300">
+                  <span>{t("subtotal")}</span>
+                  <span className="font-mono font-bold text-white">
+                    {(productPrice * quantity).toLocaleString()}{" "}
+                    {t("currency")}
                   </span>
                 </div>
-                <div className="flex justify-between items-end pt-4">
+
+                <div className="flex justify-between text-silver-300">
+                  <span>{t("shipping")}</span>
+                  <span
+                    className={
+                      deliveryFee > 0
+                        ? "font-mono font-bold text-white"
+                        : "text-emerald-400 font-bold"
+                    }
+                  >
+                    {deliveryFee > 0
+                      ? `+ ${deliveryFee} ${t("currency")}`
+                      : t("free") || (isRTL ? "مجاني" : "Free")}
+                  </span>
+                </div>
+
+                <div className="pt-4 border-t border-white/10 flex justify-between items-baseline">
                   <div>
-                    <p className="text-slate-400 text-xs uppercase tracking-widest mb-1">{t('totalAmount')}</p>
-                    <p className="text-3xl font-black text-white">{totalAmount.toLocaleString()} <span className="text-sm font-normal text-slate-400">{t('currency')}</span></p>
+                    <span className="text-xs font-bold uppercase tracking-wider text-silver-400 block">
+                      {t("totalAmount")}
+                    </span>
+                    <span className="text-[10px] text-emerald-400 font-mono">
+                      {isRTL ? "شامل الضريبة وفحص النقاء" : "Assay & VAT Included"}
+                    </span>
+                  </div>
+
+                  <div className="text-end">
+                    <span className="text-2xl sm:text-3xl font-black text-white font-mono">
+                      {totalAmount.toLocaleString()}
+                    </span>
+                    <span className="text-xs font-bold text-silver-400 ms-1 uppercase">
+                      {t("currency")}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              <button 
-                onClick={handleSubmit}
-                className="w-full bg-white text-slate-900 py-5 rounded-2xl font-black text-lg shadow-xl hover:bg-slate-100 transform active:scale-[0.98] transition-all mt-8 flex items-center justify-center gap-3"
+              {/* زر التأكيد والدفع */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-4 silver-btn-luxury text-black rounded-xl font-black text-sm uppercase tracking-wider shadow-xl active:scale-95 transition-all disabled:opacity-40 cursor-pointer flex items-center justify-center gap-2"
               >
-                {t('confirmAndPay')}
+                <span>
+                  {isSubmitting
+                    ? t("processingOrder") || (isRTL ? "جاري التأكيد..." : "Confirming...")
+                    : t("confirmAndPay") || (isRTL ? "أكد واطلب الآن" : "Confirm & Order Now")}
+                </span>
+                {!isSubmitting &&
+                  (isRTL ? (
+                    <ArrowLeft className="w-4 h-4" />
+                  ) : (
+                    <ArrowRight className="w-4 h-4" />
+                  ))}
               </button>
             </div>
 
-            <div className="bg-blue-50/50 p-6 rounded-2xl flex items-start gap-4 border border-blue-100">
-              <FiTruck className="text-blue-600 text-xl mt-1 flex-shrink-0" />
-              <p className="text-xs text-blue-800 leading-relaxed font-medium">
-                <strong>{t('fastDelivery')}:</strong> {t('deliveryInfo')}
-              </p>
+            {/* شارة الضمان والأمان */}
+            <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 flex items-start gap-3">
+              <Award className="w-5 h-5 text-silver-300 shrink-0 mt-0.5" />
+              <div className="text-xs text-silver-400 leading-relaxed">
+                <strong className="text-white block mb-0.5">
+                  {isRTL ? "ضمان الأصالة والشهادة المعتمدة:" : "Certified Bullion Warranty:"}
+                </strong>
+                {t("deliveryInfo")}
+              </div>
             </div>
-          </div>
-
-        </div>
+          </aside>
+        </form>
       </main>
-      
+
       <Footer />
     </div>
   );

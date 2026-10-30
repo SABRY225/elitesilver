@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { FiSearch, FiFilter, FiX, FiArrowRight, FiSliders, FiShoppingBag } from "react-icons/fi";
+import {
+  Search,
+  SlidersHorizontal,
+  X,
+  ArrowRight,
+  ArrowLeft,
+  ShoppingBag,
+  Sparkles,
+  Eye,
+  RotateCcw,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "../contexts/LanguageContext";
 import axios from "axios";
@@ -12,29 +22,32 @@ const SearchResults = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
-    priceRange: '',
-    sortBy: 'name'
+    priceRange: "",
+    sortBy: "name",
   });
   const { t, isRTL } = useLanguage();
 
-  const query = searchParams.get('q') || '';
+  const query = searchParams.get("q") || "";
 
   useEffect(() => {
     const fetchSearchResults = async () => {
       try {
         setLoading(true);
-        
-        // إعداد query parameters
         const params = new URLSearchParams();
-        if (query) params.append('q', query);
-        if (filters.sortBy) params.append('sortBy', filters.sortBy);
-        if (filters.priceRange) params.append('priceRange', filters.priceRange);
-        
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/products/search?${params.toString()}`);
-        setProducts(response.data);
+        if (query) params.append("q", query);
+        if (filters.sortBy) params.append("sortBy", filters.sortBy);
+        if (filters.priceRange) params.append("priceRange", filters.priceRange);
+
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL}/products/search?${params.toString()}`
+        );
+        if (Array.isArray(response.data)) {
+          setProducts(response.data);
+        } else {
+          setProducts([]);
+        }
       } catch (error) {
-        console.error('Error fetching search results:', error);
-        // في حالة فشل الـ API، يمكن عرض رسالة خطأ أو الرجوع للبيانات المحلية
+        console.error("Error fetching search results:", error);
         setProducts([]);
       } finally {
         setLoading(false);
@@ -44,186 +57,250 @@ const SearchResults = () => {
   }, [query, filters]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white font-sans" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div
+      className="min-h-screen bg-[#070709] text-white select-none flex flex-col justify-between"
+      dir={isRTL ? "rtl" : "ltr"}
+    >
       <Navbar />
-      
-      <main className="container mx-auto px-6 pt-32 pb-20 max-w-7xl">
-        
+
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 pt-36 sm:pt-44 pb-24 max-w-7xl flex-1">
         {/* Header Section */}
-        <header className="mb-16">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col md:flex-row md:items-end justify-between gap-6"
-          >
-            <div>
-              <h1 className="text-4xl md:text-5xl font-serif mb-4  uppercase tracking-tighter">
-                {t('searchResults')}
-              </h1>
-              <div className="flex items-center gap-3 text-gray-400">
-                <span className="w-8 h-[1px] bg-[#C0C0C0]"></span>
-                <p className="text-sm tracking-[0.2em] uppercase font-light">
-                  {query ? `${t('discovery')} / ${query}` : t('allCollections')}
-                </p>
-              </div>
+        <header className="mb-12 border-b border-white/10 pb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-silver-300 font-mono uppercase tracking-widest mb-3">
+              <Sparkles className="w-3.5 h-3.5 text-silver-400" />
+              <span>ELITE SILVER 925</span>
             </div>
-            <div className="bg-white/5 px-6 py-3 rounded-full border border-white/10 backdrop-blur-md">
-              <span className="text-[#C0C0C0] font-bold">{products.length}</span> 
-              <span className="text-xs uppercase tracking-widest text-gray-400 ml-2"> {t('itemsFound')}</span>
-            </div>
-          </motion.div>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
+              {t("searchResults") || (isRTL ? "نتائج البحث" : "Search Results")}
+            </h1>
+            <p className="text-silver-400 text-xs sm:text-sm mt-2 font-light">
+              {query
+                ? `${isRTL ? "نتائج البحث عن:" : "Searching for:"} "${query}"`
+                : t("allCollections") || (isRTL ? "المجموعة الكاملة" : "All Collections")}
+            </p>
+          </div>
+
+          <div className="inline-flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full border border-white/10 backdrop-blur-md text-xs">
+            <span className="font-bold text-white font-mono">{products.length}</span>
+            <span className="text-silver-400">
+              {t("itemsFound") || (isRTL ? "قطعة تم العثور عليها" : "items found")}
+            </span>
+          </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          
-          {/* Sidebar - Filters */}
-          <aside className="lg:col-span-3 space-y-10">
-            <div className="sticky top-32">
-              <div className="flex items-center gap-2 mb-8 text-[#C0C0C0]">
-                <FiSliders size={18} />
-                <h3 className="text-xs font-black uppercase tracking-[0.3em]">{t('refineBy')}</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+          {/* شريط الفلاتر والفرز الجانبي */}
+          <aside className="lg:col-span-3 space-y-6">
+            <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-5 sm:p-6 rounded-3xl border border-white/10 sticky top-32">
+              <div className="flex items-center gap-2 mb-6 text-white pb-3 border-b border-white/10">
+                <SlidersHorizontal className="w-4 h-4 text-silver-300" />
+                <h3 className="text-xs font-bold uppercase tracking-wider">
+                  {t("refineBy") || (isRTL ? "تصفية وفرز النتائج" : "Refine Search")}
+                </h3>
               </div>
 
-              {/* Sort Section */}
-              <div className="mb-10">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 block mb-4">{t('sortBy')}</label>
-                <div className="flex flex-col gap-2">
-                  {['name', 'price-low', 'price-high'].map((option) => (
-                    <FilterOption 
-                      key={option}
-                      label={t(option)}
-                      active={filters.sortBy === option}
-                      onClick={() => setFilters({ ...filters, sortBy: option })}
+              {/* الترتيب حسب */}
+              <div className="mb-6">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-silver-400 block mb-3">
+                  {t("sortBy") || (isRTL ? "الترتيب حسب" : "Sort By")}
+                </label>
+                <div className="flex flex-col gap-1.5">
+                  {[
+                    { id: "name", label: isRTL ? "الاسم" : "Name" },
+                    { id: "price-low", label: isRTL ? "السعر: من الأقل للأعلى" : "Price: Low to High" },
+                    { id: "price-high", label: isRTL ? "السعر: من الأعلى للأقل" : "Price: High to Low" },
+                  ].map((option) => (
+                    <FilterOption
+                      key={option.id}
+                      label={option.label}
+                      active={filters.sortBy === option.id}
+                      onClick={() => setFilters({ ...filters, sortBy: option.id })}
+                      isRTL={isRTL}
                     />
                   ))}
                 </div>
               </div>
 
-              {/* Price Section */}
-              <div className="mb-10">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 block mb-4">{t('priceRange')}</label>
-                <div className="flex flex-col gap-2">
+              {/* نطاق السعر */}
+              <div className="mb-6">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-silver-400 block mb-3">
+                  {t("priceRange") || (isRTL ? "نطاق السعر" : "Price Range")}
+                </label>
+                <div className="flex flex-col gap-1.5">
                   {[
-                    { label: t('allPrices'), val: '' },
-                    { label: '0 - 500 JOD', val: '0-500' },
-                    { label: '500 - 1500 JOD', val: '500-1500' },
-                    { label: '1500+ JOD', val: '1500' }
+                    { label: isRTL ? "جميع الأسعار" : "All Prices", val: "" },
+                    { label: "0 - 50 JOD", val: "0-50" },
+                    { label: "50 - 150 JOD", val: "50-150" },
+                    { label: "150+ JOD", val: "150" },
                   ].map((range) => (
-                    <FilterOption 
+                    <FilterOption
                       key={range.val}
                       label={range.label}
                       active={filters.priceRange === range.val}
                       onClick={() => setFilters({ ...filters, priceRange: range.val })}
+                      isRTL={isRTL}
                     />
                   ))}
                 </div>
               </div>
 
+              {/* إعادة تعيين الفلاتر */}
               <button
-                onClick={() => setFilters({ priceRange: '', sortBy: 'name' })}
-                className="w-full py-4 text-[10px] font-black uppercase tracking-widest border border-white/10 rounded-xl hover:bg-white/5 transition-all"
+                onClick={() => setFilters({ priceRange: "", sortBy: "name" })}
+                className="w-full py-3 text-xs font-bold uppercase tracking-wider border border-white/10 hover:border-white/30 text-silver-300 hover:text-white rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                {t('resetFilters')}
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>{t("resetFilters") || (isRTL ? "إعادة تعيين" : "Reset Filters")}</span>
               </button>
             </div>
           </aside>
 
-          {/* Main Grid */}
+          {/* شبكة نتائج المنتجات */}
           <div className="lg:col-span-9">
             <AnimatePresence mode="wait">
               {loading ? (
-                <LoadingSkeleton />
-              ) : products.length === 0 ? (
-                <EmptyState t={t} />
-              ) : (
-                <motion.div 
-                  layout
-                  className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-12"
-                >
-                  {products.map((product, idx) => (
-                    <ProductCard key={product.id || idx} product={product} t={t} isRTL={isRTL} />
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div
+                      key={i}
+                      className="bg-white/[0.03] border border-white/10 rounded-3xl p-4 animate-pulse h-[340px]"
+                    >
+                      <div className="aspect-[4/5] bg-white/5 rounded-2xl w-full mb-3" />
+                      <div className="h-4 bg-white/10 rounded w-2/3 mb-2" />
+                      <div className="h-4 bg-white/10 rounded w-1/3" />
+                    </div>
                   ))}
+                </div>
+              ) : products.length === 0 ? (
+                /* حالة عدم وجود نتائج */
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center py-28 bg-white/[0.02] rounded-3xl border border-white/10 p-8 max-w-lg mx-auto"
+                >
+                  <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 text-silver-400">
+                    <Search className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    {t("noResultsTitle") || (isRTL ? "لم يتم العثور على نتائج" : "No Results Found")}
+                  </h3>
+                  <p className="text-silver-400 text-xs sm:text-sm font-light max-w-xs mx-auto mb-6 leading-relaxed">
+                    {t("noResultsDesc") ||
+                      (isRTL
+                        ? "لم نتمكن من العثور على أي قطع تطابق بحثك. جرب كلمات مفتاحية أخرى."
+                        : "No matching pieces found. Try using different keywords.")}
+                  </p>
+                  <Link
+                    to="/category/all"
+                    className="inline-flex items-center gap-2 px-6 py-3 silver-btn-luxury text-black rounded-full text-xs font-bold uppercase tracking-wider shadow-lg"
+                  >
+                    <span>{t("browseCollections") || (isRTL ? "تصفح التشكيلات" : "Browse Collections")}</span>
+                    {isRTL ? <ArrowLeft className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
+                  </Link>
+                </motion.div>
+              ) : (
+                /* شبكة المنتجات */
+                <motion.div
+                  layout
+                  className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6"
+                >
+                  {products.map((product) => {
+                    const numericPrice = parseFloat(product.price) || 0;
+                    return (
+                      <motion.div
+                        key={product.id}
+                        whileHover={{ y: -6 }}
+                        transition={{ duration: 0.3 }}
+                        className="group bg-gradient-to-b from-white/[0.06] to-white/[0.02] rounded-2xl sm:rounded-3xl p-3 sm:p-4 border border-white/10 hover:border-silver-400/50 shadow-lg hover:shadow-2xl transition-all duration-400 flex flex-col justify-between"
+                      >
+                        <div>
+                          <div className="relative aspect-[4/5] rounded-xl sm:rounded-2xl overflow-hidden bg-black/40 mb-3.5">
+                            <div className="absolute top-2.5 ltr:left-2.5 rtl:right-2.5 z-20">
+                              <span className="bg-white/95 backdrop-blur-md text-black text-[9px] font-black px-2 py-0.5 tracking-wider uppercase rounded-full shadow-sm">
+                                {isRTL ? "فضة ٩٢٥" : "925 Silver"}
+                              </span>
+                            </div>
+
+                            <img
+                              src={
+                                product.image?.startsWith("http")
+                                  ? product.image
+                                  : `${import.meta.env.VITE_URL}/${product.image}`
+                              }
+                              alt={product.name}
+                              className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
+                              onError={(e) => {
+                                e.target.src =
+                                  "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=300&auto=format&fit=crop&q=80";
+                              }}
+                            />
+
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                              <Link
+                                to={`/product/${product.id}`}
+                                className="bg-white text-black font-bold py-2 px-4 rounded-full text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xl hover:bg-silver-200 transition-all"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>{isRTL ? "التفاصيل" : "Details"}</span>
+                              </Link>
+                            </div>
+                          </div>
+
+                          <div className="px-1 mb-2.5">
+                            <Link to={`/product/${product.id}`}>
+                              <h3 className="text-xs sm:text-sm font-bold text-white hover:text-silver-300 transition-colors line-clamp-1 mb-1">
+                                {product.name}
+                              </h3>
+                            </Link>
+                            <div className="text-[10px] text-silver-400">
+                              {isRTL ? "فضة إسترلينية إيطالية" : "Italian Sterling Silver"}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="pt-2.5 border-t border-white/10 flex items-baseline justify-between px-1">
+                          <span className="text-[10px] text-silver-400 uppercase">
+                            {t("currentPrice") || (isRTL ? "السعر" : "Price")}
+                          </span>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-base sm:text-lg font-bold font-mono text-white">
+                              {numericPrice.toLocaleString(isRTL ? "ar-JO" : "en-US", {
+                                minimumFractionDigits: 2,
+                              })}
+                            </span>
+                            <span className="text-[10px] font-bold text-silver-400 uppercase">
+                              {t("currency")}
+                            </span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
         </div>
       </main>
+
       <Footer />
     </div>
   );
 };
 
-/* --- المكونات الفرعية المحسنة --- */
-
-const FilterOption = ({ label, active, onClick }) => (
-  <button 
+const FilterOption = ({ label, active, onClick, isRTL }) => (
+  <button
     onClick={onClick}
-    className={`text-left px-4 py-3 rounded-xl text-sm transition-all duration-300 flex justify-between items-center ${
-      active ? 'bg-[#C0C0C0] text-black font-bold' : 'bg-white/5 text-gray-400 hover:bg-white/10'
+    className={`w-full text-start px-3.5 py-2.5 rounded-xl text-xs transition-all flex justify-between items-center cursor-pointer ${
+      active
+        ? "bg-white text-black font-bold shadow-md"
+        : "bg-white/5 text-silver-300 hover:bg-white/10 hover:text-white"
     }`}
   >
-    {label}
-    {active && <div className="w-1.5 h-1.5 bg-black rounded-full"></div>}
+    <span>{label}</span>
+    {active && <div className="w-1.5 h-1.5 bg-black rounded-full" />}
   </button>
-);
-
-const ProductCard = ({ product, t, isRTL }) => (
-  <motion.div 
-    layout
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    className="group"
-  >
-    <Link to={`/product/${product.id}`} className="block relative overflow-hidden rounded-2xl bg-[#111] aspect-[4/5]">
-      <img
-        src={product.image?.startsWith("http") ? product.image : `${import.meta.env.VITE_URL}/${product.image}`}
-        alt={product.name}
-        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 opacity-90 group-hover:opacity-100"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6">
-        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#C0C0C0] flex items-center gap-2">
-          {t('discoverMore')} <FiArrowRight className={isRTL ? 'rotate-180' : ''} />
-        </span>
-      </div>
-    </Link>
-    <div className="mt-6 text-center">
-      <h3 className="text-sm font-serif tracking-wide text-white group-hover:text-[#C0C0C0] transition-colors line-clamp-1 uppercase">
-        {product.name}
-      </h3>
-      <p className="text-xs font-bold text-gray-500 mt-2 tracking-widest uppercase">
-        {product.price} <span className="text-[9px] opacity-60">JOD</span>
-      </p>
-    </div>
-  </motion.div>
-);
-
-const EmptyState = ({ t }) => (
-  <motion.div 
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    className="text-center py-32 bg-white/5 rounded-[3rem] border border-dashed border-white/10"
-  >
-    <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-600">
-      <FiSearch size={30} />
-    </div>
-    <h3 className="text-xl font-serif  mb-2">{t('noResultsTitle')}</h3>
-    <p className="text-gray-500 text-sm max-w-xs mx-auto font-light leading-relaxed">
-      {t('noResultsDesc')}
-    </p>
-  </motion.div>
-);
-
-const LoadingSkeleton = () => (
-  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
-    {[1, 2, 3, 4, 5, 6].map((i) => (
-      <div key={i} className="animate-pulse">
-        <div className="bg-white/5 aspect-[4/5] rounded-2xl mb-4"></div>
-        <div className="h-3 bg-white/5 w-3/4 mx-auto mb-2 rounded"></div>
-        <div className="h-3 bg-white/5 w-1/4 mx-auto rounded"></div>
-      </div>
-    ))}
-  </div>
 );
 
 export default SearchResults;
